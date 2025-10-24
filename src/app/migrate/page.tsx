@@ -108,7 +108,7 @@ export default function MigratePage() {
     <Sidebar side="left" collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex h-12 items-center justify-between px-2">
-          <div className="flex items-center gap-2 [&>svg]:hidden">
+          <div className="flex items-center gap-2 [&>svg]:hidden group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
             <Logo />
           </div>
           <SidebarTrigger className="ml-auto" />
@@ -167,7 +167,7 @@ export default function MigratePage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-             <div className="flex-1 overflow-hidden whitespace-nowrap">
+             <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
                 <p className="text-sm font-semibold">{user.displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
