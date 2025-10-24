@@ -64,7 +64,7 @@ export default function MigratePage() {
             'sendwamessagehistories', 
             'stripewebhooks', 
             'thirdpartyproviders', 
-            'threesixtywebhookhistories', d
+            'threesixtywebhookhistories',
             'tokens', 
             'users', 
             'webhookevents'
