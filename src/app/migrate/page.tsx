@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, limit, query, type Firestore, type DocumentData } from 'firebase/firestore';
 import { oldFirebaseConfig } from '@/firebase/old-config';
-import { Loader2, Database, Folder, FileText } from 'lucide-react';
+import { Loader2, Database, Folder, FileText, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/landing/header';
 import Footer from '@/components/landing/footer';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type Schema = {
   [collectionName: string]: string[];
@@ -43,10 +44,9 @@ export default function MigratePage() {
         }
         const oldFirestore = getFirestore(oldApp);
 
-        // This is a simplified way to get collection names.
-        // Firestore doesn't have a native "listCollections" for the web SDK.
-        // We'll assume we know the collection names for this migration.
-        // In a real scenario, you might have a "metadata" document or use a Cloud Function.
+        // IMPORTANT: Firestore's web SDK does not support listing collections directly.
+        // In a real-world migration, you would need to know the names of the collections you want to migrate.
+        // We are using a predefined list here for demonstration purposes.
         const collectionsToInspect = ['members', 'communities', 'events']; 
         
         const schemaData: Schema = {};
@@ -95,6 +95,14 @@ export default function MigratePage() {
                     Inspecting the schema from <code className="bg-muted px-2 py-1 rounded-md font-mono text-sm">kyozo-pro-webflow-fb6cc</code>. Below are the collections and their fields found in the first document of each.
                 </p>
             </div>
+            
+            <Alert variant="destructive" className="max-w-4xl mx-auto mb-8 bg-amber-500/10 border-amber-500/50 text-amber-500 [&>svg]:text-amber-500">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Firestore SDK Limitation</AlertTitle>
+              <AlertDescription>
+                The Firestore web SDK cannot automatically list all collections. The collections below are common examples. To inspect other collections, you would need to manually add their names to the `collectionsToInspect` array in the code.
+              </AlertDescription>
+            </Alert>
             
             {error && <p className="text-destructive text-center">{error}</p>}
 
