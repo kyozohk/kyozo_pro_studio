@@ -1,10 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, doc, getDoc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface MemberListProps {
   firestore: Firestore;
@@ -16,6 +17,7 @@ interface MemberListProps {
 export default function MemberList({ firestore, community, onSelectMember, selectedMemberId }: MemberListProps) {
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!community) {
@@ -52,10 +54,33 @@ export default function MemberList({ firestore, community, onSelectMember, selec
     fetchMembers();
   }, [firestore, community]);
 
+  const filteredMembers = useMemo(() => {
+    if (!searchTerm) return members;
+    return members.filter(member => {
+      const name = member.fullName || member.displayName || member.tempFullName || '';
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [members, searchTerm]);
+
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Users/> Members</CardTitle>
+        <CardTitle className="flex items-center justify-between gap-2">
+            <div className='flex items-center gap-2'>
+                <Users/> Members
+            </div>
+            <span className="text-sm font-normal text-muted-foreground">{filteredMembers.length} / {members.length}</span>
+        </CardTitle>
+        <div className="relative flex items-center">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input 
+                placeholder="Type to search..."
+                className="pl-10 h-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!community}
+            />
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {loading ? (
@@ -68,9 +93,9 @@ export default function MemberList({ firestore, community, onSelectMember, selec
             </div>
         ) : (
           <ScrollArea className="h-full">
-             {members.length > 0 ? (
+             {filteredMembers.length > 0 ? (
                 <ul className="space-y-2">
-                {members.map((member) => (
+                {filteredMembers.map((member) => (
                     <li key={member.id}>
                     <button 
                         className={cn(

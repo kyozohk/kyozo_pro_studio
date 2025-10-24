@@ -1,10 +1,11 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { collection, query, where, getDocs, orderBy, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, MessageSquare } from 'lucide-react';
+import { Loader2, MessageSquare, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
 
 interface MessageListProps {
   firestore: Firestore;
@@ -15,6 +16,7 @@ interface MessageListProps {
 export default function MessageList({ firestore, communityId, memberId }: MessageListProps) {
   const [messages, setMessages] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,8 +30,6 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
       try {
         const messagesRef = collection(firestore, 'messages');
         
-        // As per the documentation, query messages where 'community' is the communityId
-        // and 'readBy' array-contains the memberId.
         const messagesQuery = query(
             messagesRef, 
             where('community', '==', communityId), 
@@ -53,10 +53,32 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
     fetchMessages();
   }, [firestore, communityId, memberId]);
 
+  const filteredMessages = useMemo(() => {
+    if (!searchTerm) return messages;
+    return messages.filter(message => 
+        message.text?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [messages, searchTerm]);
+
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><MessageSquare/> Messages</CardTitle>
+        <CardTitle className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+                <MessageSquare/> Messages
+            </div>
+            <span className="text-sm font-normal text-muted-foreground">{filteredMessages.length} / {messages.length}</span>
+        </CardTitle>
+        <div className="relative flex items-center">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input 
+                placeholder="Type to search..."
+                className="pl-10 h-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!memberId}
+            />
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {loading ? (
@@ -69,9 +91,9 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
             </div>
         ) : (
           <ScrollArea className="h-full" ref={scrollAreaRef}>
-            {messages.length > 0 ? (
+            {filteredMessages.length > 0 ? (
                 <div className="space-y-4 pr-4">
-                {messages.map((message) => (
+                {filteredMessages.map((message) => (
                     <div key={message.id} className="p-3 bg-muted/50 rounded-lg">
                         <p className="text-sm">{message.text || 'No content'}</p>
                         <p className="text-xs text-muted-foreground mt-2">
