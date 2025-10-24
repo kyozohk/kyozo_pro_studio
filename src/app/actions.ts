@@ -4,16 +4,8 @@ import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
 
-import { initializeApp, getApps, getApp } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-
-// Helper function to initialize Firebase Admin SDK and get DB instance
-function getAdminDb() {
-  if (getApps().length === 0) {
-    initializeApp();
-  }
-  return getFirestore();
-}
 
 
 export async function joinWaitlist(data: WaitlistInput) {
@@ -51,7 +43,14 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 }
 
 export async function exportCommunity(communityData: any, members: any[]) {
-    const newDb = getAdminDb();
+    let adminApp: App;
+
+    if (getApps().length === 0) {
+      adminApp = initializeApp();
+    } else {
+      adminApp = getApp();
+    }
+    const newDb = getFirestore(adminApp);
     
     try {
         const tenantId = communityData.owner;
