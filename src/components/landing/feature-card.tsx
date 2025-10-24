@@ -17,7 +17,7 @@ const FeatureCard = () => {
             Connect with visionary creators and forward-thinking communities.
           </p>
           <div>
-          <Button variant="outline" size="lg" asChild>
+          <Button variant="default" size="lg" asChild>
             <a href="#">Join the waitlist</a>
           </Button>
           </div>

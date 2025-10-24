@@ -1,12 +1,32 @@
 'use client';
 
 import ModerationTool from '@/components/moderation-tool';
-import Header from '@/components/landing/header';
-import Footer from '@/components/landing/footer';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home, Users, Settings, Database, LogOut } from 'lucide-react';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import { Logo } from '@/components/landing/logo';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { handleSignOut } from '@/firebase/auth/client';
+
 
 export default function ModerationPage() {
   const { user, loading } = useUser();
@@ -18,6 +38,15 @@ export default function ModerationPage() {
     }
   }, [user, loading, router]);
 
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '';
+    const names = name.split(' ');
+    return names
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
   if (loading || !user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
@@ -28,10 +57,76 @@ export default function ModerationPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header />
-      <main className="flex-1">
-        <div className="container py-20 md:py-32">
+    <SidebarProvider>
+      <Sidebar side="left" collapsible="icon">
+        <SidebarHeader className="border-b">
+          <div className="flex h-12 items-center justify-between px-2">
+            <div className="flex items-center gap-2 [&>svg]:hidden">
+              <Logo />
+            </div>
+            <SidebarTrigger className="ml-auto" />
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/dashboard">
+                <Home />
+                Dashboard
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/moderation" isActive>
+                <Users />
+                Moderation
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/migrate">
+                <Database />
+                Migrate
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+          <div className="md:hidden">
+            <SidebarTrigger />
+          </div>
+          <div className="ml-auto flex items-center gap-4">
+            <Button variant="ghost" size="icon">
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">Settings</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src={user.photoURL || undefined}
+                      alt={user.displayName || 'User'}
+                    />
+                    <AvatarFallback>
+                      {getInitials(user.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={() => handleSignOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </header>
+        <main className="flex-1 p-4 sm:p-6">
             <div className="max-w-2xl mx-auto text-center mb-12">
                 <h1 className="font-headline text-4xl font-bold">Community Content Moderation</h1>
                 <p className="mt-4 text-muted-foreground">
@@ -39,9 +134,8 @@ export default function ModerationPage() {
                 </p>
             </div>
             <ModerationTool />
-        </div>
-      </main>
-      <Footer />
-    </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

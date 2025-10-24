@@ -7,8 +7,6 @@ import { oldFirebaseConfig } from '@/firebase/old-config';
 import { Loader2, UploadCloud } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/landing/header';
-import Footer from '@/components/landing/footer';
 import CommunityList from './community-list';
 import MemberList from './member-list';
 import MessageList from './message-list';
@@ -17,6 +15,28 @@ import { exportCommunity } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 import CommunityDetails from './community-details';
 import MemberDetails from './member-details';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
+import { Logo } from '@/components/landing/logo';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { handleSignOut } from '@/firebase/auth/client';
+import { LogOut, Home, Users, Settings, Database } from 'lucide-react';
 
 let oldApp: FirebaseApp;
 if (!getApps().some(app => app.name === 'oldDB')) {
@@ -66,6 +86,15 @@ export default function MigratePage() {
     });
   };
 
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '';
+    const names = name.split(' ');
+    return names
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
   if (userLoading || !user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
@@ -76,49 +105,114 @@ export default function MigratePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header />
-      <main className="flex-1">
-        <div className="container py-10 md:py-16">
-            <div className="max-w-6xl mx-auto text-center mb-6">
-                <h1 className="font-headline text-4xl font-bold">Database Migration Explorer</h1>
-                <p className="mt-4 text-muted-foreground">
-                    Select a community to see its members, then select a member to see their messages from <code className="bg-muted px-2 py-1 rounded-md font-mono text-sm">kyozo-pro-webflow-fb6cc</code>.
-                </p>
-            </div>
-            <div className="max-w-7xl mx-auto mb-6 text-center">
-                 <Button onClick={handleExport} disabled={!selectedCommunity || isPending}>
-                    {isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <UploadCloud className="mr-2 h-4 w-4" />
-                    )}
-                    Export to New Schema
-                </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[70vh] max-w-7xl mx-auto">
-                <CommunityList 
-                    firestore={oldFirestore} 
-                    onSelectCommunity={handleSelectCommunity} 
-                    selectedCommunityId={selectedCommunity?.id || null}
-                />
-                <MemberList 
-                    firestore={oldFirestore}
-                    community={selectedCommunity}
-                    onSelectMember={handleSelectMember}
-                    selectedMemberId={selectedMember?.id || null}
-                    onMembersLoaded={setCommunityMembers}
-                />
-                <MessageList 
-                    firestore={oldFirestore}
-                    communityId={selectedCommunity?.id || null}
-                    memberId={selectedMember?.id || null}
-                />
-            </div>
+    <SidebarProvider>
+    <Sidebar side="left" collapsible="icon">
+      <SidebarHeader className="border-b">
+        <div className="flex h-12 items-center justify-between px-2">
+          <div className="flex items-center gap-2 [&>svg]:hidden">
+            <Logo />
+          </div>
+          <SidebarTrigger className="ml-auto" />
         </div>
+      </SidebarHeader>
+      <SidebarContent className="p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton href="/dashboard" >
+              <Home />
+              Dashboard
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton href="/moderation">
+              <Users />
+              Moderation
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton href="/migrate" isActive>
+              <Database />
+              Migrate
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
+    <SidebarInset>
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+        <div className="md:hidden">
+          <SidebarTrigger />
+        </div>
+        <div className="ml-auto flex items-center gap-4">
+          <Button variant="ghost" size="icon">
+            <Settings className="h-5 w-5" />
+            <span className="sr-only">Settings</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="relative h-8 w-8 rounded-full"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage
+                    src={user.photoURL || undefined}
+                    alt={user.displayName || 'User'}
+                  />
+                  <AvatarFallback>
+                    {getInitials(user.displayName)}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuItem onClick={() => handleSignOut()}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+      <main className="flex-1 p-4 sm:p-6">
+          <div className="max-w-6xl mx-auto text-center mb-6">
+              <h1 className="font-headline text-4xl font-bold">Database Migration Explorer</h1>
+              <p className="mt-4 text-muted-foreground">
+                  Select a community to see its members, then select a member to see their messages from <code className="bg-muted px-2 py-1 rounded-md font-mono text-sm">kyozo-pro-webflow-fb6cc</code>.
+              </p>
+          </div>
+          <div className="max-w-7xl mx-auto mb-6 text-center">
+               <Button onClick={handleExport} disabled={!selectedCommunity || isPending}>
+                  {isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                      <UploadCloud className="mr-2 h-4 w-4" />
+                  )}
+                  Export to New Schema
+              </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[70vh] max-w-7xl mx-auto">
+              <CommunityList 
+                  firestore={oldFirestore} 
+                  onSelectCommunity={handleSelectCommunity} 
+                  selectedCommunityId={selectedCommunity?.id || null}
+              />
+              <MemberList 
+                  firestore={oldFirestore}
+                  community={selectedCommunity}
+                  onSelectMember={handleSelectMember}
+                  selectedMemberId={selectedMember?.id || null}
+                  onMembersLoaded={setCommunityMembers}
+              />
+              <MessageList 
+                  firestore={oldFirestore}
+                  communityId={selectedCommunity?.id || null}
+                  memberId={selectedMember?.id || null}
+              />
+          </div>
       </main>
-      <Footer />
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -7,6 +7,7 @@ import AuthDialog from '../auth/auth-dialog';
 import { useUser } from '@/firebase';
 import { handleSignOut } from '@/firebase/auth/client';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 interface FixedFooterProps {
   className?: string;
@@ -21,7 +22,7 @@ const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
 
   // Auto-redirect authenticated users to dashboard
   useEffect(() => {
-    if (user && pathname === '/') {
+    if (user && (pathname === '/' || pathname === '/login' || pathname === '/signup')) {
       console.log('🔵 User authenticated, redirecting to dashboard');
       router.push('/dashboard');
     }
@@ -56,33 +57,39 @@ const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
     }
   };
 
-  // Don't render footer on dashboard pages
-  if (pathname?.startsWith('/dashboard') || pathname?.startsWith('/migrate') || pathname?.startsWith('/moderation')) {
-    return null;
-  }
-
   return (
     <>
       <footer className={`${styles.fixedFooter} ${className}`}>
         <div className={styles.container}>
           <div className={styles.logoButtonContainer}>
-            <Image 
-              src="/logo.png" 
-              alt="Kyozo Logo" 
-              width={100} 
-              height={30} 
-              className={styles.buttonLogo}
-            />
+             <Link href="/" className={styles.buttonLogo}>
+                <Image 
+                src="/logo.png" 
+                alt="Kyozo Logo" 
+                width={100} 
+                height={30} 
+                />
+             </Link>
             {user ? (
-              <Button 
-                variant="ghost" 
-                onClick={handleLogout}
-                className={styles.joinButton}
-                size="sm"
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? 'Logging out...' : 'Sign Out'}
-              </Button>
+               <div className="flex items-center gap-2">
+                <Button 
+                    variant="ghost" 
+                    onClick={() => router.push('/dashboard')}
+                    className={styles.joinButton}
+                    size="sm"
+                >
+                    Dashboard
+                </Button>
+                <Button 
+                    variant="ghost" 
+                    onClick={handleLogout}
+                    className={styles.joinButton}
+                    size="sm"
+                    disabled={isLoggingOut}
+                >
+                    {isLoggingOut ? 'Logging out...' : 'Sign Out'}
+                </Button>
+              </div>
             ) : (
               <Button 
                 variant="default" 
