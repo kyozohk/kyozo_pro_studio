@@ -146,10 +146,10 @@ export default function MemberList({
                 />
             </div>
             <div className='flex items-center gap-1 bg-muted/40 p-1 rounded-lg'>
-                <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('list')}>
+                <Button variant={viewMode === 'list' ? 'primary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('list')}>
                     <List size={16}/>
                 </Button>
-                <Button variant={viewMode === 'icon' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('icon')}>
+                <Button variant={viewMode === 'icon' ? 'primary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('icon')}>
                     <LayoutGrid size={16}/>
                 </Button>
             </div>
@@ -177,6 +177,7 @@ export default function MemberList({
                                 <button 
                                     className={cn(
                                         "w-full text-left p-3 rounded-lg hover:bg-muted/40 transition-colors flex items-center gap-4",
+                                        "bg-card/50",
                                         selectedMemberId === member.id && "bg-primary/10"
                                     )}
                                     onClick={() => onSelectMember(member)}

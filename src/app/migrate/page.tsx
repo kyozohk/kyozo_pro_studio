@@ -23,6 +23,7 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   SidebarTrigger,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { Logo } from '@/components/landing/logo';
@@ -135,6 +136,40 @@ export default function MigratePage() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
+        <SidebarFooter className="flex items-center gap-2 p-2">
+           <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-10 w-10 rounded-full"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage
+                      src={user.photoURL || undefined}
+                      alt={user.displayName || 'User'}
+                    />
+                    <AvatarFallback>
+                      {getInitials(user.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={() => handleSignOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+             <div className="flex-1 overflow-hidden whitespace-nowrap">
+                <p className="text-sm font-semibold">{user.displayName}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-10 w-10">
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">Settings</span>
+            </Button>
+        </SidebarFooter>
     </Sidebar>
     <SidebarInset>
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
@@ -142,34 +177,6 @@ export default function MigratePage() {
           <SidebarTrigger />
         </div>
         <div className="ml-auto flex items-center gap-4">
-          <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
-            <span className="sr-only">Settings</span>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-8 w-8 rounded-full"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={user.photoURL || undefined}
-                    alt={user.displayName || 'User'}
-                  />
-                  <AvatarFallback>
-                    {getInitials(user.displayName)}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem onClick={() => handleSignOut()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
       <main className="flex-1 p-4 sm:p-6">
