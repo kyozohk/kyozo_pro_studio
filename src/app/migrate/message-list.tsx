@@ -111,7 +111,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
 
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
         <div className="relative flex items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
-                placeholder="Type to search..."
+                placeholder="Search messages..."
                 className="pl-10 h-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

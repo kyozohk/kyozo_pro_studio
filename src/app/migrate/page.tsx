@@ -9,11 +9,9 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import CommunityList from './community-list';
 import MemberList from './member-list';
-import MessageList from './message-list';
 import { Button } from '@/components/ui/button';
 import { exportCommunity } from '../actions';
 import { useToast } from '@/hooks/use-toast';
-import CommunityDetails from './community-details';
 import MemberDetails from './member-details';
 import {
   Sidebar,
@@ -192,24 +190,29 @@ export default function MigratePage() {
               </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[70vh] max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-[3fr,5fr] gap-8 max-w-7xl mx-auto">
               <CommunityList 
                   firestore={oldFirestore} 
                   onSelectCommunity={handleSelectCommunity} 
                   selectedCommunityId={selectedCommunity?.id || null}
               />
-              <MemberList 
+              <div className="flex flex-col gap-4">
+                <MemberList 
+                    firestore={oldFirestore}
+                    community={selectedCommunity}
+                    onSelectMember={handleSelectMember}
+                    selectedMemberId={selectedMember?.id || null}
+                    onMembersLoaded={setCommunityMembers}
+                    showEmail
+                    showJoiningDate
+                    showActions
+                />
+                <MemberDetails 
                   firestore={oldFirestore}
-                  community={selectedCommunity}
-                  onSelectMember={handleSelectMember}
-                  selectedMemberId={selectedMember?.id || null}
-                  onMembersLoaded={setCommunityMembers}
-              />
-              <MessageList 
-                  firestore={oldFirestore}
+                  member={selectedMember}
                   communityId={selectedCommunity?.id || null}
-                  memberId={selectedMember?.id || null}
-              />
+                />
+              </div>
           </div>
       </main>
       </SidebarInset>

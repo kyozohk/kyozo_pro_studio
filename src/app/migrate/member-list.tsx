@@ -2,12 +2,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, doc, getDoc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Users, Search, Crown } from 'lucide-react';
+import { Users, Search, MoreVertical, Edit, MessageSquare, Phone, Mail, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { format } from 'date-fns';
 
 interface MemberListProps {
   firestore: Firestore;
@@ -15,23 +17,48 @@ interface MemberListProps {
   onSelectMember: (data: DocumentData) => void;
   selectedMemberId: string | null;
   onMembersLoaded: (members: DocumentData[]) => void;
+  showEmail?: boolean;
+  showPhoneNumber?: boolean;
+  showJoiningDate?: boolean;
+  showActions?: boolean;
 }
 
 const MemberSkeleton = () => (
   <div className="space-y-2">
     {[...Array(10)].map((_, i) => (
-      <div key={i} className="flex items-center gap-2 p-2">
-        <Skeleton className="h-6 w-6 rounded-full" />
+      <div key={i} className="flex items-center gap-4 p-3 bg-muted/20 rounded-lg">
+        <Skeleton className="h-10 w-10 rounded-full" />
         <div className="flex-1 space-y-1">
           <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/4" />
         </div>
+        <Skeleton className="h-4 w-1/4" />
+        <Skeleton className="h-4 w-1/4" />
       </div>
     ))}
   </div>
 );
 
+const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    const names = name.split(' ');
+    return names
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
 
-export default function MemberList({ firestore, community, onSelectMember, selectedMemberId, onMembersLoaded }: MemberListProps) {
+export default function MemberList({ 
+    firestore, 
+    community, 
+    onSelectMember, 
+    selectedMemberId, 
+    onMembersLoaded,
+    showEmail = false,
+    showPhoneNumber = true,
+    showJoiningDate = false,
+    showActions = false,
+}: MemberListProps) {
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,7 +86,15 @@ export default function MemberList({ firestore, community, onSelectMember, selec
         const memberSnapshots = await Promise.all(memberPromises);
         const memberList = memberSnapshots
             .filter(snap => snap.exists())
-            .map(snap => ({ id: snap.id, ...snap.data() }));
+            .map(snap => {
+                const communityUser = community.usersList.find((u:any) => u.userId === snap.id);
+                return { 
+                    id: snap.id, 
+                    ...snap.data(),
+                    joinDate: communityUser?.joinedAt,
+                    status: communityUser?.approvalStatus || 'active',
+                }
+            });
 
         memberList.sort((a, b) => {
             const roleA = a.role || 'user';
@@ -94,26 +129,20 @@ export default function MemberList({ firestore, community, onSelectMember, selec
   }, [members, searchTerm]);
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2">
-            <div className='flex items-center gap-2'>
-                <Users/> Members
-            </div>
-            <span className="text-sm font-normal text-muted-foreground">{filteredMembers.length} / {members.length}</span>
-        </CardTitle>
+    <Card className="flex flex-col bg-transparent border-0 shadow-none">
+      <CardHeader className="px-0">
         <div className="relative flex items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
-                placeholder="Search by name or email..."
-                className="pl-10 h-9"
+                placeholder="Search members..."
+                className="pl-10 h-9 bg-muted/40 border-0"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={!community}
             />
         </div>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
+      <CardContent className="flex-1 overflow-hidden p-0">
         {loading ? (
           <MemberSkeleton />
         ) : !community ? (
@@ -125,23 +154,48 @@ export default function MemberList({ firestore, community, onSelectMember, selec
              {filteredMembers.length > 0 ? (
                 <ul className="space-y-1 pr-2">
                 {filteredMembers.map((member) => {
-                    const role = member.role || 'user';
+                    const name = member.fullName || member.displayName || member.tempFullName || 'Unknown User';
+                    const role = member.role || 'Member';
+                    const status = member.status || 'active';
+                    const joinDate = member.joinDate ? format(new Date(member.joinDate), 'PP') : '-';
                     return (
                         <li key={member.id}>
-                        <button 
-                            className={cn(
-                                "w-full text-left p-2 rounded-md hover:bg-muted transition-colors flex items-center gap-3",
-                                selectedMemberId === member.id && "bg-primary text-primary-foreground hover:bg-primary/90"
-                            )}
-                            onClick={() => onSelectMember(member)}
-                        >
-                            <div className='flex-1'>
-                                <p className="font-semibold truncate">{member.fullName || member.displayName || member.tempFullName || 'Unnamed Member'}</p>
-                                <p className="text-xs text-muted-foreground truncate">{member.email || member.id}</p>
-                            </div>
-                            {role.toLowerCase().includes('admin') && <Crown className="h-4 w-4 text-yellow-500" />}
-                            <Badge variant={role.toLowerCase().includes('admin') ? "destructive" : "secondary"}>{role}</Badge>
-                        </button>
+                            <button 
+                                className={cn(
+                                    "w-full text-left p-3 rounded-lg hover:bg-muted/40 transition-colors flex items-center gap-4",
+                                    selectedMemberId === member.id && "bg-primary/10"
+                                )}
+                                onClick={() => onSelectMember(member)}
+                            >
+                                <Avatar className="h-10 w-10 text-lg bg-primary/20 text-primary-foreground">
+                                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                                </Avatar>
+                                <div className='flex-1 grid grid-cols-5 items-center gap-4'>
+                                    <div className="col-span-1">
+                                        <p className="font-semibold truncate">{name}</p>
+                                        <p className="text-xs text-muted-foreground capitalize">{role}</p>
+                                    </div>
+                                    <div className="col-span-1 text-sm text-muted-foreground truncate">
+                                        {showEmail ? (member.email || '-') : '-'}
+                                    </div>
+                                    <div className="col-span-1 text-sm text-muted-foreground">
+                                        {showPhoneNumber ? (member.phoneNumber || '-') : '-'}
+                                    </div>
+                                    <div className="col-span-1 flex items-center gap-2 text-sm">
+                                        <Badge variant={status === 'active' ? 'success' : 'secondary'} className="capitalize">{status}</Badge>
+                                        {showJoiningDate && <span>{joinDate}</span>}
+                                    </div>
+                                    {showActions && (
+                                        <div className="col-span-1 flex justify-end items-center gap-2 text-muted-foreground">
+                                            <button className="hover:text-foreground"><Edit size={16} /></button>
+                                            <button className="hover:text-foreground"><MessageSquare size={16} /></button>
+                                            <button className="hover:text-foreground"><Phone size={16} /></button>
+                                            <button className="hover:text-foreground"><Mail size={16} /></button>
+                                            <button className="hover:text-destructive"><Trash2 size={16} /></button>
+                                        </div>
+                                    )}
+                                </div>
+                            </button>
                         </li>
                     )
                 })}
