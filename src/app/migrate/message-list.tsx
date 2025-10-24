@@ -44,7 +44,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
         const receivedMessagesQuery = query(
             collection(firestore, 'messages'),
             where('community', '==', communityId),
-            where('readBy', 'array-contains', { userId: memberId }),
+            // We have to filter by memberId on the client side
         );
         const sentMessagesQuery = query(
             collection(firestore, 'sendwamessagehistories'),
@@ -57,12 +57,27 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
             getDocs(sentMessagesQuery),
         ]);
 
-        const receivedMessages = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const receivedMessages = receivedSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(msg => {
+                // readBy can be an array or an object
+                if (Array.isArray(msg.readBy)) {
+                    return msg.readBy.some((r: any) => r.userId === memberId);
+                } else if (typeof msg.readBy === 'object' && msg.readBy !== null) {
+                    return (msg.readBy as any).user === memberId;
+                }
+                return false;
+            });
+            
         const sentMessages = sentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         const allUserMessages = [...receivedMessages, ...sentMessages].filter(msg => msg.text);
 
-        allUserMessages.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        allUserMessages.sort((a, b) => {
+            const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.createdAt);
+            const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.createdAt);
+            return dateA.getTime() - dateB.getTime();
+        });
 
         setMessages(allUserMessages);
 
@@ -83,6 +98,17 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
         message.text?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [messages, searchTerm]);
+
+  const formatDate = (date: any) => {
+    if (!date) return 'No date';
+    try {
+        const d = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
+        return format(d, 'PPpp');
+    } catch {
+        return 'Invalid date';
+    }
+  }
+
 
   return (
     <Card className="flex flex-col">
@@ -119,10 +145,10 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
                     <div key={message.id} className="p-3 bg-muted/50 rounded-lg">
                         <p className="text-sm">{message.text || 'No content'}</p>
                         <p className="text-xs text-muted-foreground mt-2">
-                            From: {message.sender}
+                            From: {message.sender || (message.readBy as any)?.user || 'Unknown'}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {message.createdAt?.seconds ? format(new Date(message.createdAt.seconds * 1000), 'PPpp') : 'No date'}
+                            {formatDate(message.createdAt)}
                         </p>
                     </div>
                 ))}
