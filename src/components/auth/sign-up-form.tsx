@@ -8,11 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useTransition } from 'react';
-import { handleGoogleSignIn, handleSignUp } from '@/firebase/auth/client';
+import { handleSignUp } from '@/firebase/auth/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { GoogleIcon } from './google-icon';
-import { Separator } from '../ui/separator';
+import { Loader2, Eye, EyeOff, Mail, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -62,7 +60,8 @@ export default function SignUpForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      <div className="relative input-container">
+      <div className="relative input-container flex items-center">
+        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
         <Input
           id="name"
           placeholder=" "
@@ -70,16 +69,17 @@ export default function SignUpForm() {
           onFocus={() => setNameFocused(true)}
           onBlur={() => setNameFocused(false)}
           className={cn(
-              'peer', 
+              'peer pl-10', 
               form.formState.errors.name ? 'border-destructive' : 'border-input',
               nameFocused && 'gradient-border'
             )}
         />
         <Label htmlFor="name">Your Name</Label>
-        {form.formState.errors.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>}
+        {form.formState.errors.name && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.name.message}</p>}
       </div>
 
-      <div className="relative input-container">
+      <div className="relative input-container flex items-center">
+        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
         <Input
           id="email"
           type="email"
@@ -88,16 +88,23 @@ export default function SignUpForm() {
           onFocus={() => setEmailFocused(true)}
           onBlur={() => setEmailFocused(false)}
           className={cn(
-              'peer', 
+              'peer pl-10', 
               form.formState.errors.email ? 'border-destructive' : 'border-input',
               emailFocused && 'gradient-border'
             )}
         />
         <Label htmlFor="email">Your Email</Label>
-        {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
+        {form.formState.errors.email && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.email.message}</p>}
       </div>
       
-      <div className="relative input-container">
+      <div className="relative input-container flex items-center">
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10"
+        >
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
         <Input
           id="password"
           type={showPassword ? 'text' : 'password'}
@@ -106,24 +113,24 @@ export default function SignUpForm() {
           onFocus={() => setPasswordFocused(true)}
           onBlur={() => setPasswordFocused(false)}
           className={cn(
-            'peer', 
+            'peer pl-10', 
             form.formState.errors.password ? 'border-destructive' : 'border-input',
             passwordFocused && 'gradient-border'
             )}
         />
         <Label htmlFor="password">Create a password</Label>
+        {form.formState.errors.password && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.password.message}</p>}
+      </div>
+
+
+      <div className="relative input-container flex items-center">
         <button
           type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10"
         >
-          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
-      </div>
-      {form.formState.errors.password && <p className="text-xs text-destructive -mt-3 ml-1">{form.formState.errors.password.message}</p>}
-
-
-      <div className="relative input-container">
         <Input
           id="confirmPassword"
           type={showConfirmPassword ? 'text' : 'password'}
@@ -132,23 +139,16 @@ export default function SignUpForm() {
           onFocus={() => setConfirmPasswordFocused(true)}
           onBlur={() => setConfirmPasswordFocused(false)}
           className={cn(
-            'peer', 
+            'peer pl-10', 
             form.formState.errors.confirmPassword ? 'border-destructive' : 'border-input',
             confirmPasswordFocused && 'gradient-border'
             )}
         />
         <Label htmlFor="confirmPassword">Please confirm your password</Label>
-        <button
-          type="button"
-          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-        >
-          {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
+        {form.formState.errors.confirmPassword && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.confirmPassword.message}</p>}
       </div>
-      {form.formState.errors.confirmPassword && <p className="text-xs text-destructive -mt-3 ml-1">{form.formState.errors.confirmPassword.message}</p>}
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 pt-2">
         <Checkbox 
             id="agree"
             onCheckedChange={(checked) => form.setValue('agree', !!checked)}
@@ -158,7 +158,7 @@ export default function SignUpForm() {
           I agree to the <a href="#" className="underline text-primary">Terms & Conditions</a>
         </Label>
       </div>
-      {form.formState.errors.agree && <p className="text-xs text-destructive">{form.formState.errors.agree.message}</p>}
+      {form.formState.errors.agree && <p className="text-xs text-destructive -mt-2 ml-1">{form.formState.errors.agree.message}</p>}
       
       {error && <p className="text-sm text-destructive text-center">{error}</p>}
 
@@ -166,15 +166,6 @@ export default function SignUpForm() {
         <Button type="submit" className="w-full font-bold uppercase" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign Up
-        </Button>
-        <div className="flex items-center gap-2">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">OR</span>
-            <Separator className="flex-1" />
-        </div>
-        <Button variant="outline" className="w-full" onClick={() => handleGoogleSignIn(() => router.push('/dashboard'))}>
-          <GoogleIcon className="mr-2" />
-          Continue with Google
         </Button>
       </div>
     </form>
