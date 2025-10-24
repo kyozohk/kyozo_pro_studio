@@ -4,19 +4,15 @@ import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
 
-import { initializeApp, getApps, getApp, type App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase Admin SDK and get DB instance
 function getAdminDb() {
-  if (getApps().some(app => app.name === 'admin')) {
-    return getFirestore(getApp('admin'));
+  if (getApps().length === 0) {
+    initializeApp();
   }
-  const adminApp = initializeApp({
-    databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
-  }, 'admin');
-  return getFirestore(adminApp);
+  return getFirestore();
 }
 
 
