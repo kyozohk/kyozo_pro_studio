@@ -4,23 +4,19 @@ import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
 
-import { initializeApp, getApp, getApps, type App } from 'firebase-admin/app';
+import { initializeApp, getApps, getApp, type App } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
 // Helper function to initialize Firebase Admin SDK and get DB instance
 function getAdminDb() {
-    const appName = 'admin';
-    let app: App;
-
-    if (!getApps().some(existingApp => existingApp.name === appName)) {
-        app = initializeApp({
-            databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
-        }, appName);
-    } else {
-        app = getApp(appName);
-    }
-    return getFirestore(app);
+  if (getApps().some(app => app.name === 'admin')) {
+    return getFirestore(getApp('admin'));
+  }
+  const adminApp = initializeApp({
+    databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
+  }, 'admin');
+  return getFirestore(adminApp);
 }
 
 
@@ -60,87 +56,94 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 
 export async function exportCommunity(communityData: any, members: any[]) {
     const newDb = getAdminDb();
-    const tenantId = communityData.owner;
-    if (!tenantId) {
-        throw new Error('Community data does not have an owner ID.');
-    }
-
-    const batch = newDb.batch();
-
-    // 1. Create/update tenant document
-    const tenantRef = newDb.collection('tenants').doc(tenantId);
-    batch.set(tenantRef, {
-        tenantId: tenantId,
-        name: 'Migrated Tenant', // Placeholder
-        email: 'owner@example.com', // Placeholder
-        subscription: { plan: 'pro', status: 'active' },
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-
-    // 2. Create community document
-    const communityRef = tenantRef.collection('communities').doc(communityData.id);
-    batch.set(communityRef, {
-        communityId: communityData.id,
-        name: communityData.name,
-        description: communityData.lore || '',
-        profile: {
-            logoUrl: communityData.communityProfileImage || null,
-            bannerUrl: communityData.communityBackgroundImage || null,
-        },
-        tags: communityData.tags || [],
-        visibility: communityData.communityPrivacy || 'private',
-        memberCount: members.length,
-        createdBy: tenantId,
-        createdAt: communityData.createdAt ? new Date(communityData.createdAt) : FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-    });
-
-    // 3. Process members
-    for (const member of members) {
-         const memberId = member.id;
-         
-         // Create/update global user record
-         const userRef = newDb.collection('users').doc(memberId);
-         batch.set(userRef, {
-             userId: memberId,
-             basicProfile: {
-                 name: member.fullName || member.tempFullName || 'Unknown User',
-                 email: member.email || null,
-                 phone: member.phoneNumber || null,
-             },
-             tenants: FieldValue.arrayUnion(tenantId),
-             createdAt: FieldValue.serverTimestamp(),
-             updatedAt: FieldValue.serverTimestamp(),
-         }, { merge: true });
-
-         // Create tenant-specific member record
-         const tenantMemberRef = tenantRef.collection('members').doc(memberId);
-         batch.set(tenantMemberRef, {
-             memberId: memberId,
-             profile: {
-                name: member.fullName || member.tempFullName || 'Unknown User',
-                email: member.email || null,
-                phone: member.phoneNumber || null,
-                avatarUrl: member.profileImage || member.photoURL || null,
-             },
-             communities: FieldValue.arrayUnion(communityData.id),
-             createdAt: FieldValue.serverTimestamp(),
-             updatedAt: FieldValue.serverTimestamp(),
-         }, { merge: true });
-
-         // Create community membership record
-         const membershipRef = communityRef.collection('memberships').doc(memberId);
-         const userInCommunity = communityData.usersList.find((u:any) => u.userId === memberId);
-         batch.set(membershipRef, {
-             memberId: memberId,
-             joinDate: userInCommunity?.joinedAt ? new Date(userInCommunity.joinedAt) : FieldValue.serverTimestamp(),
-             status: userInCommunity?.approvalStatus || 'active',
-             role: 'member', // Placeholder
-         });
-    }
     
-    await batch.commit();
+    try {
+        const tenantId = communityData.owner;
+        if (!tenantId) {
+            throw new Error('Community data does not have an owner ID.');
+        }
 
-    return { success: true, message: `Community '${communityData.name}' and its ${members.length} members exported successfully!` };
+        const batch = newDb.batch();
+
+        // 1. Create/update tenant document
+        const tenantRef = newDb.collection('tenants').doc(tenantId);
+        batch.set(tenantRef, {
+            tenantId: tenantId,
+            name: 'Migrated Tenant', // Placeholder
+            email: 'owner@example.com', // Placeholder
+            subscription: { plan: 'pro', status: 'active' },
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        // 2. Create community document
+        const communityRef = tenantRef.collection('communities').doc(communityData.id);
+        batch.set(communityRef, {
+            communityId: communityData.id,
+            name: communityData.name,
+            description: communityData.lore || '',
+            profile: {
+                logoUrl: communityData.communityProfileImage || null,
+                bannerUrl: communityData.communityBackgroundImage || null,
+            },
+            tags: communityData.tags || [],
+            visibility: communityData.communityPrivacy || 'private',
+            memberCount: members.length,
+            createdBy: tenantId,
+            createdAt: communityData.createdAt ? new Date(communityData.createdAt) : FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        // 3. Process members
+        for (const member of members) {
+             const memberId = member.id;
+             
+             // Create/update global user record
+             const userRef = newDb.collection('users').doc(memberId);
+             batch.set(userRef, {
+                 userId: memberId,
+                 basicProfile: {
+                     name: member.fullName || member.tempFullName || 'Unknown User',
+                     email: member.email || null,
+                     phone: member.phoneNumber || null,
+                 },
+                 tenants: FieldValue.arrayUnion(tenantId),
+                 createdAt: FieldValue.serverTimestamp(),
+                 updatedAt: FieldValue.serverTimestamp(),
+             }, { merge: true });
+
+             // Create tenant-specific member record
+             const tenantMemberRef = tenantRef.collection('members').doc(memberId);
+             batch.set(tenantMemberRef, {
+                 memberId: memberId,
+                 profile: {
+                    name: member.fullName || member.tempFullName || 'Unknown User',
+                    email: member.email || null,
+                    phone: member.phoneNumber || null,
+                    avatarUrl: member.profileImage || member.photoURL || null,
+                 },
+                 communities: FieldValue.arrayUnion(communityData.id),
+                 createdAt: FieldValue.serverTimestamp(),
+                 updatedAt: FieldValue.serverTimestamp(),
+             }, { merge: true });
+
+             // Create community membership record
+             const membershipRef = communityRef.collection('memberships').doc(memberId);
+             const userInCommunity = communityData.usersList.find((u:any) => u.userId === memberId);
+             batch.set(membershipRef, {
+                 memberId: memberId,
+                 joinDate: userInCommunity?.joinedAt ? new Date(userInCommunity.joinedAt) : FieldValue.serverTimestamp(),
+                 status: userInCommunity?.approvalStatus || 'active',
+                 role: 'member', // Placeholder
+             });
+        }
+        
+        await batch.commit();
+
+        return { success: true, message: `Community '${communityData.name}' and its ${members.length} members exported successfully!` };
+
+    } catch (error: any) {
+        console.error('Export failed:', error);
+        return { success: false, message: `Export failed: ${error.message}` };
+    }
 }
