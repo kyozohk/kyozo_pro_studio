@@ -15,33 +15,26 @@ export default function Home() {
         <HeroSection />
         <FeatureCard />
         <section className="container py-20 md:py-32 text-center">
-            <h2 className="text-3xl font-bold font-headline md:text-4xl text-primary">This is Kyozo</h2>
-            <ScrollRevealText text="The eco-system for creative luminaries" />
+            <ScrollRevealText text="Where creative minds converge" />
         </section>
         <SlidingCards>
           <SlidingCardItem 
-            title="Build Your World"
-            text="Create vibrant, multi-faceted communities tailored to your vision."
-            buttonText="Explore Features"
+            title="Insider Access"
+            text="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
+            buttonText="Join the waitlist"
             color="blue"
           />
           <SlidingCardItem 
-            title="Engage & Inspire"
-            text="Connect with your members through omnichannel communication tools."
-            buttonText="Learn More"
+            title="Community Access"
+            text="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
+            buttonText="Join the waitlist"
             color="green"
           />
           <SlidingCardItem 
-            title="Host & Monetize"
-            text="Seamlessly manage events and ticketing with integrated payment solutions."
-            buttonText="See Pricing"
+            title="Creator Tools"
+            text="Are you a creative professional, community organizer, or small business owner working within the creative industries? We understand the challenges of nurturing and growing a dedicated audience, so we built KyozoPro, a comprehensive platform that enhances genuine connections and unlocks new opportunities."
+            buttonText="Join the waitlist"
             color="purple"
-          />
-           <SlidingCardItem 
-            title="Secure & Moderate"
-            text="Keep your community safe with powerful, AI-driven content moderation."
-            buttonText="Request a Demo"
-            color="rose"
           />
         </SlidingCards>
         <FeaturesSection />
