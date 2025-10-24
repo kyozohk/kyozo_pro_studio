@@ -56,14 +56,14 @@ const Row: React.FC<RowProps> = ({
   );
 };
 
-interface MarqueeProps {
+interface TopicMarqueeProps {
   categories: {
     category: CategoryType;
     items: Item[];
   }[];
 }
 
-const Marquee: React.FC<MarqueeProps> = ({ categories }) => {
+const TopicMarquee: React.FC<TopicMarqueeProps> = ({ categories }) => {
   return (
     <div className={styles.marqueeContainer}>
       {categories.map((row, index) => (
@@ -79,4 +79,4 @@ const Marquee: React.FC<MarqueeProps> = ({ categories }) => {
   );
 };
 
-export default Marquee;
+export default TopicMarquee;

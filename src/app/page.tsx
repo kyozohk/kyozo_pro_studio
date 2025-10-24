@@ -6,12 +6,13 @@ import ScrollRevealText from '@/components/landing/scroll-reveal-text';
 import SlidingCards from '@/components/landing/sliding-cards';
 import SlidingCardItem from '@/components/landing/sliding-card-item';
 import Toolkit from '@/components/landing/toolkit';
-import Marquee from '@/components/landing/marquee';
+import TopicMarquee from '@/components/landing/marquee';
 import PricingSection from '@/components/landing/pricing-section';
 import VideoWall from '@/components/landing/video-wall';
 import BottomText from '@/components/landing/bottom-text';
 import ParallaxGallery from '@/components/landing/parallax-gallery';
 import Image from 'next/image';
+import BubbleMarquee from '@/components/landing/bubble-marquee';
 
 export default function Home() {
   return (
@@ -50,7 +51,7 @@ export default function Home() {
           />
         </SlidingCards>
         <Toolkit />
-        <Marquee 
+        <TopicMarquee 
           categories={[
             {
               category: 'music',
@@ -82,6 +83,66 @@ export default function Home() {
           ]}
         />
         <PricingSection />
+        <BubbleMarquee 
+          categories={[
+            {
+              category: 'music',
+              items: [
+                { text: 'Rock' },
+                { text: 'Jazz' },
+                { text: 'R&B' },
+                { text: 'Trance' },
+                { text: 'Techno' },
+                { text: 'Hip Hop' },
+                { text: 'Classical' },
+              ]
+            },
+            {
+              category: 'classicism',
+              items: [
+                { text: 'Expressionism' },
+                { text: 'Futurism' },
+                { text: 'Classicism' },
+                { text: 'Cubism' },
+                { text: 'Surrealism' },
+                { text: 'Dadaism' },
+              ]
+            },
+            {
+              category: 'jewelry',
+              items: [
+                { text: 'Wood Burning' },
+                { text: 'Candle-making' },
+                { text: 'Crochet' },
+                { text: 'Jewelry' },
+                { text: 'Pottery' },
+                { text: 'Weaving' },
+              ]
+            },
+            {
+              category: 'vintage',
+              items: [
+                { text: 'Chic' },
+                { text: 'Grunge' },
+                { text: 'Vintage' },
+                { text: 'Boho' },
+                { text: 'Preppy' },
+                { text: 'Streetwear' },
+              ]
+            },
+            {
+              category: 'minimal',
+              items: [
+                { text: 'Stand-ups' },
+                { text: 'Musical' },
+                { text: 'Digital' },
+                { text: 'Theatre' },
+                { text: 'Dance' },
+                { text: 'Opera' },
+              ]
+            }
+          ]}
+        />
         <BottomText text="Join the creative universe" />
       </main>
     </div>
