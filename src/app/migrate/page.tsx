@@ -119,25 +119,25 @@ export default function MigratePage() {
           <SidebarMenuItem>
             <SidebarMenuButton href="/dashboard" >
               <Home />
-              Dashboard
+              <span>Dashboard</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton href="/moderation">
               <Users />
-              Moderation
+              <span>Moderation</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton href="/migrate" isActive>
               <Database />
-              Migrate
+              <span>Migrate</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
               <SidebarMenuButton href="#">
                 <Settings />
-                Settings
+                <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>
