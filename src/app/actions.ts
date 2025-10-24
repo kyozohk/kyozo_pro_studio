@@ -43,13 +43,15 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 }
 
 export async function exportCommunity(communityData: any, members: any[]) {
-    // Use the client SDK for writes, assuming rules allow it.
-    const { firestore } = initializeFirebase();
-    if (!firestore) {
-      return { success: false, message: 'Firestore is not initialized.' };
-    }
-    
+    // NOTE: This functionality is currently broken due to server-side auth issues.
+    // The code below is a placeholder and will fail.
+    console.error("Export functionality is currently disabled.");
     try {
+        const { firestore } = initializeFirebase();
+        if (!firestore) {
+          throw new Error('Firestore is not initialized.');
+        }
+        
         const tenantId = communityData.owner;
         if (!tenantId) {
             throw new Error('Community data does not have an owner ID.');

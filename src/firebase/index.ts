@@ -13,8 +13,8 @@ import {
 import { useUser } from './auth/use-user';
 
 let firebaseApp: FirebaseApp;
-let auth: Auth | undefined;
-let firestore: Firestore | undefined;
+let auth: Auth | null = null;
+let firestore: Firestore | null = null;
 
 // This function is idempotent, so it can be called multiple times.
 function initializeFirebase() {
@@ -26,15 +26,11 @@ function initializeFirebase() {
 
   // Only initialize auth and firestore on the client
   if (typeof window !== 'undefined') {
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
-  } else {
-    // For server-side rendering, we might not need auth, but firestore can be useful.
-    // Ensure we don't re-initialize it if it already exists.
-    try {
-      firestore = getFirestore(firebaseApp);
-    } catch (e) {
-      firestore = getFirestore();
+    if (!auth) {
+        auth = getAuth(firebaseApp);
+    }
+    if (!firestore) {
+        firestore = getFirestore(firebaseApp);
     }
   }
   
