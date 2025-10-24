@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, type DocumentData, type Firestore } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,11 +26,23 @@ export default function MemberList({ firestore, communityId, onSelectMember, sel
     const fetchMembers = async () => {
       setLoading(true);
       try {
-        // Assumption: users collection has a 'communityIds' array field
-        const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where('communityIds', 'array-contains', communityId));
-        const querySnapshot = await getDocs(q);
-        const memberList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const membersRef = collection(firestore, 'communities', communityId, 'members');
+        const membersSnapshot = await getDocs(membersRef);
+        
+        const memberPromises = membersSnapshot.docs.map(async (memberDoc) => {
+          const memberData = memberDoc.data();
+          if (memberData.user && memberData.user.path) {
+            const userDocRef = doc(firestore, memberData.user.path);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              return { id: userDoc.id, ...userDoc.data() };
+            }
+          }
+          return null;
+        });
+
+        const memberList = (await Promise.all(memberPromises)).filter(member => member !== null) as DocumentData[];
+        
         setMembers(memberList);
       } catch (error) {
         console.error("Error fetching members:", error);
@@ -70,7 +82,7 @@ export default function MemberList({ firestore, communityId, onSelectMember, sel
                         )}
                         onClick={() => onSelectMember(member.id)}
                     >
-                        <p className="font-semibold truncate">{member.name || 'Unnamed Member'}</p>
+                        <p className="font-semibold truncate">{member.name || member.displayName || 'Unnamed Member'}</p>
                         <p className="text-xs text-muted-foreground truncate">{member.email || member.id}</p>
                     </button>
                     </li>
