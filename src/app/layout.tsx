@@ -6,6 +6,9 @@ import FirebaseClientProvider from '@/firebase/client-provider';
 export const metadata: Metadata = {
   title: 'Kyozo',
   description: 'The eco-system for creative luminaries.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
