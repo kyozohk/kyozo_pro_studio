@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, doc, getDoc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, Users, Search, Crown } from 'lucide-react';
+import { Users, Search, Crown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -14,16 +14,16 @@ interface MemberListProps {
   community: DocumentData | null;
   onSelectMember: (data: DocumentData) => void;
   selectedMemberId: string | null;
+  onMembersLoaded: (members: DocumentData[]) => void;
 }
 
 const MemberSkeleton = () => (
   <div className="space-y-2">
     {[...Array(10)].map((_, i) => (
       <div key={i} className="flex items-center gap-2 p-2">
-        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="h-6 w-6 rounded-full" />
         <div className="flex-1 space-y-1">
           <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-1/2" />
         </div>
       </div>
     ))}
@@ -31,7 +31,7 @@ const MemberSkeleton = () => (
 );
 
 
-export default function MemberList({ firestore, community, onSelectMember, selectedMemberId }: MemberListProps) {
+export default function MemberList({ firestore, community, onSelectMember, selectedMemberId, onMembersLoaded }: MemberListProps) {
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,6 +39,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
   useEffect(() => {
     if (!community) {
       setMembers([]);
+      onMembersLoaded([]);
       return;
     }
 
@@ -48,6 +49,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
       
       if (userIds.length === 0) {
         setMembers([]);
+        onMembersLoaded([]);
         setLoading(false);
         return;
       }
@@ -59,32 +61,35 @@ export default function MemberList({ firestore, community, onSelectMember, selec
             .filter(snap => snap.exists())
             .map(snap => ({ id: snap.id, ...snap.data() }));
 
-        // Sort by role, admins first
         memberList.sort((a, b) => {
-            const roleA = a.communityHandles?.find((h:any) => h.communityId === community.id)?.role || 'user';
-            const roleB = b.communityHandles?.find((h:any) => h.communityId === community.id)?.role || 'user';
+            const roleA = a.role || 'user';
+            const roleB = b.role || 'user';
             if (roleA.includes('admin') && !roleB.includes('admin')) return -1;
             if (!roleA.includes('admin') && roleB.includes('admin')) return 1;
             return (a.fullName || a.displayName || '').localeCompare(b.fullName || b.displayName || '');
         })
 
         setMembers(memberList);
+        onMembersLoaded(memberList);
       } catch (error) {
         console.error("Error fetching members:", error);
         setMembers([]);
+        onMembersLoaded([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMembers();
-  }, [firestore, community]);
+  }, [firestore, community, onMembersLoaded]);
 
   const filteredMembers = useMemo(() => {
     if (!searchTerm) return members;
+    const lowercasedTerm = searchTerm.toLowerCase();
     return members.filter(member => {
       const name = member.fullName || member.displayName || member.tempFullName || '';
-      return name.toLowerCase().includes(searchTerm.toLowerCase());
+      const email = member.email || '';
+      return name.toLowerCase().includes(lowercasedTerm) || email.toLowerCase().includes(lowercasedTerm);
     });
   }, [members, searchTerm]);
 
@@ -100,7 +105,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
         <div className="relative flex items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
-                placeholder="Type to search..."
+                placeholder="Search by name or email..."
                 className="pl-10 h-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -120,8 +125,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
              {filteredMembers.length > 0 ? (
                 <ul className="space-y-1 pr-2">
                 {filteredMembers.map((member) => {
-                    const handle = member.communityHandles?.find((h:any) => h.communityId === community.id);
-                    const role = handle?.role || 'user';
+                    const role = member.role || 'user';
                     return (
                         <li key={member.id}>
                         <button 
@@ -135,8 +139,8 @@ export default function MemberList({ firestore, community, onSelectMember, selec
                                 <p className="font-semibold truncate">{member.fullName || member.displayName || member.tempFullName || 'Unnamed Member'}</p>
                                 <p className="text-xs text-muted-foreground truncate">{member.email || member.id}</p>
                             </div>
-                            {role.includes('admin') && <Crown className="h-4 w-4 text-yellow-500" />}
-                            <Badge variant={role.includes('admin') ? "destructive" : "secondary"}>{role}</Badge>
+                            {role.toLowerCase().includes('admin') && <Crown className="h-4 w-4 text-yellow-500" />}
+                            <Badge variant={role.toLowerCase().includes('admin') ? "destructive" : "secondary"}>{role}</Badge>
                         </button>
                         </li>
                     )

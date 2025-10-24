@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, Folder, Search } from 'lucide-react';
+import { Folder, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -18,10 +18,9 @@ const CommunitySkeleton = () => (
     <div className="space-y-2">
         {[...Array(10)].map((_, i) => (
             <div key={i} className="flex items-center gap-2 p-2">
-                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-6 w-6 rounded-full" />
                 <div className="flex-1 space-y-1">
                     <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-1/2" />
                 </div>
             </div>
         ))}
@@ -80,7 +79,7 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
           <CommunitySkeleton />
         ) : (
           <ScrollArea className="h-full">
-            <ul className="space-y-2 pr-2">
+            <ul className="space-y-1 pr-2">
               {filteredCommunities.map((community) => (
                 <li key={community.id}>
                   <button 

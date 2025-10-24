@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { collection, query, where, getDocs, orderBy, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Loader2, MessageSquare, Search } from 'lucide-react';
+import { MessageSquare, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,6 @@ const MessageSkeleton = () => (
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-1/2 mt-2" />
-                <Skeleton className="h-3 w-1/3" />
             </div>
         ))}
     </div>
@@ -42,32 +41,30 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const messagesQuery = query(
+        const receivedMessagesQuery = query(
             collection(firestore, 'messages'),
             where('community', '==', communityId),
+            where('readBy', 'array-contains', { userId: memberId }),
         );
         const sentMessagesQuery = query(
             collection(firestore, 'sendwamessagehistories'),
             where('community', '==', communityId),
+            where('sender', '==', memberId)
         );
 
-        const [messagesSnapshot, sentMessagesSnapshot] = await Promise.all([
-            getDocs(messagesQuery),
+        const [receivedSnapshot, sentSnapshot] = await Promise.all([
+            getDocs(receivedMessagesQuery),
             getDocs(sentMessagesQuery),
         ]);
 
-        const receivedMessages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const sentMessages = sentMessagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const receivedMessages = receivedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const sentMessages = sentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        const allCommunityMessages = [...receivedMessages, ...sentMessages];
+        const allUserMessages = [...receivedMessages, ...sentMessages].filter(msg => msg.text);
 
-        const userMessages = allCommunityMessages.filter(msg => 
-            ((msg.readBy?.some((r: any) => r.userId === memberId)) || (msg.sender === memberId)) && msg.text
-        );
+        allUserMessages.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
-        userMessages.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-
-        setMessages(userMessages);
+        setMessages(allUserMessages);
 
       } catch (error) {
         console.error("Error fetching messages:", error);
