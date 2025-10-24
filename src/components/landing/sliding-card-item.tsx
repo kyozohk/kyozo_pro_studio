@@ -6,24 +6,43 @@ import { Button } from '../ui/button';
 
 interface SlidingCardItemProps {
   title: string;
+  subtitle?: string;
   text: string;
   buttonText: string;
   color: 'blue' | 'green' | 'purple' | 'rose';
+  content?: React.ReactNode;
 }
 
 const SlidingCardItem: React.FC<SlidingCardItemProps> = ({ 
   title, 
+  subtitle,
   text, 
   buttonText,
-  color
+  color,
+  content,
 }) => {
   return (
     <div className={cn(styles.card, styles[color])}>
-      <div className={styles.cardContent}>
-        <h2 className={styles.cardTitle}>{title}</h2>
-        <p className={styles.cardText}>{text}</p>
-        <Button variant="outline" size="lg">{buttonText}</Button>
-      </div>
+        {content ? (
+          <div className={styles.splitContent}>
+            <div className={styles.leftPane}>
+              {subtitle && <p className={styles.cardSubtitle}>{subtitle}</p>}
+              <h2 className={styles.cardTitle}>{title}</h2>
+              <p className={styles.cardText}>{text}</p>
+              <Button variant="outline" size="lg">{buttonText}</Button>
+            </div>
+            <div className={styles.rightPane}>
+              {content}
+            </div>
+          </div>
+        ) : (
+          <div className={styles.cardContent}>
+            {subtitle && <p className={styles.cardSubtitle}>{subtitle}</p>}
+            <h2 className={styles.cardTitle}>{title}</h2>
+            <p className={styles.cardText}>{text}</p>
+            <Button variant="outline" size="lg">{buttonText}</Button>
+          </div>
+        )}
     </div>
   );
 };

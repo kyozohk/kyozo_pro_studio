@@ -8,6 +8,7 @@ import SlidingCardItem from '@/components/landing/sliding-card-item';
 import Toolkit from '@/components/landing/toolkit';
 import Marquee from '@/components/landing/marquee';
 import PricingSection from '@/components/landing/pricing-section';
+import VideoWall from '@/components/landing/video-wall';
 
 export default function Home() {
   return (
@@ -21,19 +22,23 @@ export default function Home() {
         </section>
         <SlidingCards>
           <SlidingCardItem 
-            title="Insider Access"
+            subtitle="INSIDER ACCESS"
+            title="Exclusive access and insights"
             text="Experience the creative world through an insider's lens. Kyozo is an eco-system of creative communities - that gives you exclusive access to updates and insights from the creative luminaries driving cultural evolution."
             buttonText="Join the waitlist"
             color="blue"
+            content={<VideoWall />}
           />
           <SlidingCardItem 
-            title="Community Access"
+            subtitle="COMMUNITY ACCESS"
+            title="Engage with visionary communities"
             text="Join and interact with diverse communities, from niche artistic circles to industry-leading collectives. Engage with passionate individuals who share your creative interests."
             buttonText="Join the waitlist"
             color="green"
           />
           <SlidingCardItem 
-            title="Creator Tools"
+            subtitle="CREATOR TOOLS"
+            title="Grow your creative community"
             text="Are you a creative professional, community organizer, or small business owner working within the creative industries? We understand the challenges of nurturing and growing a dedicated audience, so we built KyozoPro, a comprehensive platform that enhances genuine connections and unlocks new opportunities."
             buttonText="Join the waitlist"
             color="purple"
