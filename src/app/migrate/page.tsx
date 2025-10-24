@@ -12,11 +12,9 @@ import Footer from '@/components/landing/footer';
 import CommunityList from './community-list';
 import MemberList from './member-list';
 import MessageList from './message-list';
-import CommunityDetails from './community-details';
-import MemberDetails from './member-details';
 
 let oldApp: FirebaseApp;
-if (getApps().every(app => app.name !== 'oldDB')) {
+if (!getApps().some(app => app.name === 'oldDB')) {
   oldApp = initializeApp(oldFirebaseConfig, 'oldDB');
 } else {
   oldApp = getApp('oldDB');
@@ -63,11 +61,6 @@ export default function MigratePage() {
                 <p className="mt-4 text-muted-foreground">
                     Select a community to see its members, then select a member to see their messages from <code className="bg-muted px-2 py-1 rounded-md font-mono text-sm">kyozo-pro-webflow-fb6cc</code>.
                 </p>
-            </div>
-
-            <div className="max-w-7xl mx-auto mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <CommunityDetails communityData={selectedCommunity} />
-              <MemberDetails memberData={selectedMember} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[70vh] max-w-7xl mx-auto">

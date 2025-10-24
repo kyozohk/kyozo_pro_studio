@@ -6,12 +6,27 @@ import { Loader2, Folder, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface CommunityListProps {
   firestore: Firestore;
   onSelectCommunity: (data: DocumentData) => void;
   selectedCommunityId: string | null;
 }
+
+const CommunitySkeleton = () => (
+    <div className="space-y-2">
+        {[...Array(10)].map((_, i) => (
+            <div key={i} className="flex items-center gap-2 p-2">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                </div>
+            </div>
+        ))}
+    </div>
+)
 
 export default function CommunityList({ firestore, onSelectCommunity, selectedCommunityId }: CommunityListProps) {
   const [communities, setCommunities] = useState<DocumentData[]>([]);
@@ -21,6 +36,7 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
+        setLoading(true);
         const querySnapshot = await getDocs(collection(firestore, 'communities'));
         const communityList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setCommunities(communityList);
@@ -61,12 +77,10 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <CommunitySkeleton />
         ) : (
           <ScrollArea className="h-full">
-            <ul className="space-y-2">
+            <ul className="space-y-2 pr-2">
               {filteredCommunities.map((community) => (
                 <li key={community.id}>
                   <button 

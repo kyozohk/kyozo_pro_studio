@@ -6,12 +6,26 @@ import { Loader2, MessageSquare, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MessageListProps {
   firestore: Firestore;
   communityId: string | null;
   memberId: string | null;
 }
+
+const MessageSkeleton = () => (
+    <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+            <div key={i} className="p-3 bg-muted/50 rounded-lg space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2 mt-2" />
+                <Skeleton className="h-3 w-1/3" />
+            </div>
+        ))}
+    </div>
+)
 
 export default function MessageList({ firestore, communityId, memberId }: MessageListProps) {
   const [messages, setMessages] = useState<DocumentData[]>([]);
@@ -48,7 +62,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
         const allCommunityMessages = [...receivedMessages, ...sentMessages];
 
         const userMessages = allCommunityMessages.filter(msg => 
-            (msg.readBy?.some((r: any) => r.userId === memberId)) || (msg.sender === memberId)
+            ((msg.readBy?.some((r: any) => r.userId === memberId)) || (msg.sender === memberId)) && msg.text
         );
 
         userMessages.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
@@ -95,9 +109,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <MessageSkeleton />
         ) : !memberId ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
                 <p>Select a member to see their messages.</p>
