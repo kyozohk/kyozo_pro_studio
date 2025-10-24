@@ -5,6 +5,7 @@ import ScrollRevealText from '@/components/landing/scroll-reveal-text';
 import SlidingCards from '@/components/landing/sliding-cards';
 import SlidingCardItem from '@/components/landing/sliding-card-item';
 import Toolkit from '@/components/landing/toolkit';
+import Marquee from '@/components/landing/marquee';
 
 export default function Home() {
   return (
@@ -37,6 +38,37 @@ export default function Home() {
           />
         </SlidingCards>
         <Toolkit />
+        <Marquee 
+          categories={[
+            {
+              category: 'music',
+              items: [
+                { text: 'Rediscovering your creative passion' },
+                { text: 'Prompts to Turbocharge Your Creative Process' },
+                { text: 'BPM heartrate and running' },
+                { text: 'The creative paradox' },
+              ]
+            },
+            {
+                category: 'artMovements',
+                items: [
+                  { text: 'Exploring Abstract Expressionism' },
+                  { text: 'The Impact of Surrealism on Modern Art' },
+                  { text: 'Understanding the Bauhaus Movement' },
+                  { text: 'Pop Art and Consumer Culture' },
+                ]
+            },
+            {
+                category: 'fashion',
+                items: [
+                  { text: 'Sustainable Fashion Trends' },
+                  { text: 'The History of Streetwear' },
+                  { text: 'Vintage Fashion Revival' },
+                  { text: 'The Art of Accessorizing' },
+                ]
+            }       
+          ]}
+        />
       </main>
     </div>
   );
