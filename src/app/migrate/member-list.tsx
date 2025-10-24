@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, doc, getDoc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Users, Search, MoreVertical, Edit, MessageSquare, Phone, Mail, Trash2 } from 'lucide-react';
+import { Users, Search, MoreVertical, Edit, MessageSquare, Phone, Mail, Trash2, List, LayoutGrid } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MemberListProps {
   firestore: Firestore;
@@ -62,6 +64,7 @@ export default function MemberList({
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'icon'>('list');
 
   useEffect(() => {
     if (!community) {
@@ -131,15 +134,25 @@ export default function MemberList({
   return (
     <Card className="flex flex-col bg-transparent border-0 shadow-none">
       <CardHeader className="px-0">
-        <div className="relative flex items-center">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-                placeholder="Search members..."
-                className="pl-10 h-9 bg-muted/40 border-0"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={!community}
-            />
+        <div className="flex items-center gap-2">
+            <div className="relative flex items-center flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input 
+                    placeholder="Search members..."
+                    className="pl-10 h-9 bg-muted/40 border-0"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    disabled={!community}
+                />
+            </div>
+            <div className='flex items-center gap-1 bg-muted/40 p-1 rounded-lg'>
+                <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('list')}>
+                    <List size={16}/>
+                </Button>
+                <Button variant={viewMode === 'icon' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('icon')}>
+                    <LayoutGrid size={16}/>
+                </Button>
+            </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
@@ -152,54 +165,78 @@ export default function MemberList({
         ) : (
           <ScrollArea className="h-full">
              {filteredMembers.length > 0 ? (
-                <ul className="space-y-1 pr-2">
-                {filteredMembers.map((member) => {
-                    const name = member.fullName || member.displayName || member.tempFullName || 'Unknown User';
-                    const role = member.role || 'Member';
-                    const status = member.status || 'active';
-                    const joinDate = member.joinDate ? format(new Date(member.joinDate), 'PP') : '-';
-                    return (
-                        <li key={member.id}>
-                            <button 
-                                className={cn(
-                                    "w-full text-left p-3 rounded-lg hover:bg-muted/40 transition-colors flex items-center gap-4",
-                                    selectedMemberId === member.id && "bg-primary/10"
-                                )}
-                                onClick={() => onSelectMember(member)}
-                            >
-                                <Avatar className="h-10 w-10 text-lg bg-primary/20 text-primary-foreground">
-                                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
-                                </Avatar>
-                                <div className='flex-1 grid grid-cols-5 items-center gap-4'>
-                                    <div className="col-span-1">
-                                        <p className="font-semibold truncate">{name}</p>
-                                        <p className="text-xs text-muted-foreground capitalize">{role}</p>
-                                    </div>
-                                    <div className="col-span-1 text-sm text-muted-foreground truncate">
-                                        {showEmail ? (member.email || '-') : '-'}
-                                    </div>
-                                    <div className="col-span-1 text-sm text-muted-foreground">
-                                        {showPhoneNumber ? (member.phoneNumber || '-') : '-'}
-                                    </div>
-                                    <div className="col-span-1 flex items-center gap-2 text-sm">
-                                        <Badge variant={status === 'active' ? 'success' : 'secondary'} className="capitalize">{status}</Badge>
-                                        {showJoiningDate && <span>{joinDate}</span>}
-                                    </div>
-                                    {showActions && (
-                                        <div className="col-span-1 flex justify-end items-center gap-2 text-muted-foreground">
-                                            <button className="hover:text-foreground"><Edit size={16} /></button>
-                                            <button className="hover:text-foreground"><MessageSquare size={16} /></button>
-                                            <button className="hover:text-foreground"><Phone size={16} /></button>
-                                            <button className="hover:text-foreground"><Mail size={16} /></button>
-                                            <button className="hover:text-destructive"><Trash2 size={16} /></button>
-                                        </div>
+                viewMode === 'list' ? (
+                    <ul className="space-y-1 pr-2">
+                    {filteredMembers.map((member) => {
+                        const name = member.fullName || member.displayName || member.tempFullName || 'Unknown User';
+                        const role = member.role || 'Member';
+                        const status = member.status || 'active';
+                        const joinDate = member.joinDate ? format(new Date(member.joinDate), 'PP') : '-';
+                        return (
+                            <li key={member.id}>
+                                <button 
+                                    className={cn(
+                                        "w-full text-left p-3 rounded-lg hover:bg-muted/40 transition-colors flex items-center gap-4",
+                                        selectedMemberId === member.id && "bg-primary/10"
                                     )}
-                                </div>
-                            </button>
-                        </li>
-                    )
-                })}
-                </ul>
+                                    onClick={() => onSelectMember(member)}
+                                >
+                                    <Avatar className="h-10 w-10 text-lg bg-primary/20 text-primary-foreground">
+                                        <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className='flex-1 grid grid-cols-5 items-center gap-4'>
+                                        <div className="col-span-1">
+                                            <p className="font-semibold truncate">{name}</p>
+                                            <p className="text-xs text-muted-foreground capitalize">{role}</p>
+                                        </div>
+                                        <div className="col-span-1 text-sm text-muted-foreground truncate">
+                                            {showEmail ? (member.email || '-') : '-'}
+                                        </div>
+                                        <div className="col-span-1 text-sm text-muted-foreground">
+                                            {showPhoneNumber ? (member.phoneNumber || '-') : '-'}
+                                        </div>
+                                        <div className="col-span-1 flex items-center gap-2 text-sm">
+                                            <Badge variant={status === 'active' ? 'success' : 'secondary'} className="capitalize">{status}</Badge>
+                                            {showJoiningDate && <span>{joinDate}</span>}
+                                        </div>
+                                        {showActions && (
+                                            <div className="col-span-1 flex justify-end items-center gap-2 text-muted-foreground">
+                                                <button className="hover:text-foreground"><Edit size={16} /></button>
+                                                <button className="hover:text-foreground"><MessageSquare size={16} /></button>
+                                                <button className="hover:text-foreground"><Phone size={16} /></button>
+                                                <button className="hover:text-foreground"><Mail size={16} /></button>
+                                                <button className="hover:text-destructive"><Trash2 size={16} /></button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </button>
+                            </li>
+                        )
+                    })}
+                    </ul>
+                ) : (
+                    <TooltipProvider>
+                        <div className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-4 pr-2">
+                            {filteredMembers.map((member) => {
+                                const name = member.fullName || member.displayName || member.tempFullName || 'Unknown User';
+                                return (
+                                    <Tooltip key={member.id}>
+                                        <TooltipTrigger asChild>
+                                            <button onClick={() => onSelectMember(member)}>
+                                                <Avatar className={cn("h-12 w-12 text-lg bg-primary/20 text-primary-foreground border-2 border-transparent", selectedMemberId === member.id && "border-primary")}>
+                                                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                                                </Avatar>
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{name}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                )
+                            })}
+                        </div>
+                    </TooltipProvider>
+                )
              ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                     <p>No members found for this community.</p>
