@@ -2,9 +2,13 @@
   "entities": {
     "UserProfile": {
       "title": "User Profile",
-      "description": "Represents a user's profile in the application.",
+      "description": "Represents a user's public profile across the entire application.",
       "type": "object",
       "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The unique identifier for the user."
+        },
         "displayName": {
           "type": "string",
           "description": "The user's display name."
@@ -18,17 +22,114 @@
           "type": "string",
           "format": "uri",
           "description": "URL of the user's profile picture."
+        },
+        "tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of tenant IDs the user belongs to."
         }
       },
-      "required": [
-        "displayName",
-        "email"
-      ]
+      "required": ["userId", "displayName", "email"]
+    },
+    "Tenant": {
+      "title": "Tenant",
+      "description": "Represents a paying customer or organization (a tenant).",
+      "type": "object",
+      "properties": {
+        "tenantId": {
+          "type": "string",
+          "description": "The unique identifier for the tenant, usually the owner's user ID."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the tenant organization."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The primary contact email for the tenant."
+        },
+        "subscription": {
+          "type": "object",
+          "properties": {
+            "plan": { "type": "string", "enum": ["free", "pro", "enterprise"] },
+            "status": { "type": "string", "enum": ["active", "inactive", "trialing"] }
+          }
+        }
+      },
+      "required": ["tenantId", "name", "email"]
+    },
+    "Community": {
+      "title": "Community",
+      "description": "A community created by a tenant.",
+      "type": "object",
+      "properties": {
+        "communityId": {
+          "type": "string",
+          "description": "The unique identifier for the community."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the community."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the community."
+        },
+        "profile": {
+          "type": "object",
+          "properties": {
+            "logoUrl": { "type": "string", "format": "uri" },
+            "bannerUrl": { "type": "string", "format": "uri" }
+          }
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "private", "secret"]
+        },
+        "memberCount": {
+          "type": "number"
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "The ID of the tenant who created the community."
+        }
+      },
+      "required": ["communityId", "name", "createdBy"]
+    },
+    "Membership": {
+      "title": "Membership",
+      "description": "Represents a user's membership within a specific community.",
+      "type": "object",
+      "properties": {
+        "memberId": {
+          "type": "string",
+          "description": "The user ID of the member."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "moderator", "member"],
+          "description": "The role of the member within the community."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "pending", "banned"],
+          "description": "The status of the membership."
+        },
+        "joinDate": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["memberId", "role", "status"]
     }
   },
   "auth": {
     "providers": [
-      "google.com"
+      "google.com",
+      "password"
     ]
   },
   "firestore": {
@@ -36,7 +137,25 @@
       "schema": {
         "$ref": "#/entities/UserProfile"
       },
-      "description": "Stores user profile information."
+      "description": "Stores public user profile information for all users."
+    },
+    "/tenants/{tenantId}": {
+      "schema": {
+        "$ref": "#/entities/Tenant"
+      },
+      "description": "Top-level collection for multi-tenancy. Each document is an organization."
+    },
+    "/tenants/{tenantId}/communities/{communityId}": {
+      "schema": {
+        "$ref": "#/entities/Community"
+      },
+      "description": "Subcollection storing all communities created by a specific tenant."
+    },
+    "/tenants/{tenantId}/communities/{communityId}/memberships/{memberId}": {
+      "schema": {
+        "$ref": "#/entities/Membership"
+      },
+      "description": "Subcollection tracking members and their roles within a specific community."
     }
   }
 }
