@@ -23,7 +23,7 @@ const getGoogleProvider = () => {
 }
 
 
-export function handleGoogleSignIn() {
+export function handleGoogleSignIn(callback?: () => void) {
   const auth = getAuth();
   const provider = getGoogleProvider();
   signInWithPopup(auth, provider)
@@ -34,6 +34,9 @@ export function handleGoogleSignIn() {
       // The signed-in user info.
       const user = result.user;
       console.log({ credential, token, user });
+      if (callback) {
+        callback();
+      }
     })
     .catch(error => {
       // Handle Errors here.

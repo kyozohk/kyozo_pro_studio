@@ -8,16 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useTransition } from 'react';
-import { handleSignUp } from '@/firebase/auth/client';
+import { handleGoogleSignIn, handleSignUp } from '@/firebase/auth/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleIcon } from './google-icon';
 import { Separator } from '../ui/separator';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,7 @@ export default function SignUpForm() {
           title: 'Account Created',
           description: "You're all set! Welcome to Kyozo.",
         });
+        router.push('/dashboard');
       } catch (e: any) {
         if (e.code === 'auth/email-already-in-use') {
           setError("An account with this email already exists.");
@@ -169,7 +172,7 @@ export default function SignUpForm() {
             <span className="text-xs text-muted-foreground">OR</span>
             <Separator className="flex-1" />
         </div>
-        <Button variant="outline" className="w-full">
+        <Button variant="outline" className="w-full" onClick={() => handleGoogleSignIn(() => router.push('/dashboard'))}>
           <GoogleIcon className="mr-2" />
           Continue with Google
         </Button>

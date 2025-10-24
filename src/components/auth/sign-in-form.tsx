@@ -11,11 +11,13 @@ import { handleSignIn } from "@/firebase/auth/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
   
@@ -36,6 +38,7 @@ export default function SignInForm() {
                     title: "Signed In",
                     description: "You have been successfully signed in.",
                 });
+                router.push('/dashboard');
             } catch (e: any) {
                 switch (e.code) {
                     case 'auth/user-not-found':

@@ -9,6 +9,7 @@ import SignUpForm from './sign-up-form';
 import SignInForm from './sign-in-form';
 import { useState } from 'react';
 import { handleGoogleSignIn } from '@/firebase/auth/client';
+import { useRouter } from 'next/navigation';
 
 type AuthDialogProps = {
   open: boolean;
@@ -17,6 +18,7 @@ type AuthDialogProps = {
 
 export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [isSigningIn, setIsSigningIn] = useState(true);
+  const router = useRouter();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
