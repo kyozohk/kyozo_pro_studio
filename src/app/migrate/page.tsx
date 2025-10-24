@@ -13,6 +13,7 @@ import CommunityList from './community-list';
 import MemberList from './member-list';
 import MessageList from './message-list';
 import CommunityDetails from './community-details';
+import MemberDetails from './member-details';
 
 let oldApp: FirebaseApp;
 if (getApps().every(app => app.name !== 'oldDB')) {
@@ -26,7 +27,7 @@ export default function MigratePage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
   const [selectedCommunity, setSelectedCommunity] = useState<DocumentData | null>(null);
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<DocumentData | null>(null);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -36,11 +37,11 @@ export default function MigratePage() {
 
   const handleSelectCommunity = (communityData: DocumentData) => {
     setSelectedCommunity(communityData);
-    setSelectedMemberId(null); // Reset member selection when community changes
+    setSelectedMember(null); // Reset member selection when community changes
   };
 
-  const handleSelectMember = (memberId: string) => {
-    setSelectedMemberId(memberId);
+  const handleSelectMember = (memberData: DocumentData) => {
+    setSelectedMember(memberData);
   };
   
   if (userLoading || !user) {
@@ -64,8 +65,9 @@ export default function MigratePage() {
                 </p>
             </div>
 
-            <div className="max-w-7xl mx-auto mb-4">
+            <div className="max-w-7xl mx-auto mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <CommunityDetails communityData={selectedCommunity} />
+              <MemberDetails memberData={selectedMember} />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[70vh] max-w-7xl mx-auto">
@@ -76,14 +78,14 @@ export default function MigratePage() {
                 />
                 <MemberList 
                     firestore={oldFirestore}
-                    communityId={selectedCommunity?.id || null}
+                    community={selectedCommunity}
                     onSelectMember={handleSelectMember}
-                    selectedMemberId={selectedMemberId}
+                    selectedMemberId={selectedMember?.id || null}
                 />
                 <MessageList 
                     firestore={oldFirestore}
                     communityId={selectedCommunity?.id || null}
-                    memberId={selectedMemberId}
+                    memberId={selectedMember?.id || null}
                 />
             </div>
         </div>

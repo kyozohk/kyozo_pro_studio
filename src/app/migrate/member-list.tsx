@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, type DocumentData, type Firestore } from 'firebase/firestore';
+import { collection, doc, getDoc, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,30 +8,37 @@ import { cn } from '@/lib/utils';
 
 interface MemberListProps {
   firestore: Firestore;
-  communityId: string | null;
-  onSelectMember: (id: string) => void;
+  community: DocumentData | null;
+  onSelectMember: (data: DocumentData) => void;
   selectedMemberId: string | null;
 }
 
-export default function MemberList({ firestore, communityId, onSelectMember, selectedMemberId }: MemberListProps) {
+export default function MemberList({ firestore, community, onSelectMember, selectedMemberId }: MemberListProps) {
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!communityId) {
+    if (!community) {
       setMembers([]);
       return;
     }
 
     const fetchMembers = async () => {
       setLoading(true);
+      const userIds = community.usersList?.map((u: any) => u.userId) || [];
+      
+      if (userIds.length === 0) {
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+      
       try {
-        const usersRef = collection(firestore, 'users');
-        // As per the documentation, query users where the 'communities' array contains the communityId.
-        const membersQuery = query(usersRef, where('communities', 'array-contains', communityId));
-        
-        const querySnapshot = await getDocs(membersQuery);
-        const memberList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const memberPromises = userIds.map((id: string) => getDoc(doc(firestore, 'users', id)));
+        const memberSnapshots = await Promise.all(memberPromises);
+        const memberList = memberSnapshots
+            .filter(snap => snap.exists())
+            .map(snap => ({ id: snap.id, ...snap.data() }));
 
         setMembers(memberList);
       } catch (error) {
@@ -43,7 +50,7 @@ export default function MemberList({ firestore, communityId, onSelectMember, sel
     };
 
     fetchMembers();
-  }, [firestore, communityId]);
+  }, [firestore, community]);
 
   return (
     <Card className="flex flex-col">
@@ -55,7 +62,7 @@ export default function MemberList({ firestore, communityId, onSelectMember, sel
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ) : !communityId ? (
+        ) : !community ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
                 <p>Select a community to see its members.</p>
             </div>
@@ -70,9 +77,9 @@ export default function MemberList({ firestore, communityId, onSelectMember, sel
                             "w-full text-left p-2 rounded-md hover:bg-muted transition-colors",
                             selectedMemberId === member.id && "bg-primary text-primary-foreground hover:bg-primary/90"
                         )}
-                        onClick={() => onSelectMember(member.id)}
+                        onClick={() => onSelectMember(member)}
                     >
-                        <p className="font-semibold truncate">{member.fullName || member.displayName || 'Unnamed Member'}</p>
+                        <p className="font-semibold truncate">{member.fullName || member.displayName || member.tempFullName || 'Unnamed Member'}</p>
                         <p className="text-xs text-muted-foreground truncate">{member.email || member.id}</p>
                     </button>
                     </li>
