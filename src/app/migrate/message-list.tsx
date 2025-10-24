@@ -31,13 +31,29 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
         const messagesQuery = query(
             collection(firestore, 'messages'),
             where('community', '==', communityId),
-            where('readBy', 'array-contains', { userId: memberId }),
-            orderBy('createdAt', 'desc')
+        );
+        const sentMessagesQuery = query(
+            collection(firestore, 'sendwamessagehistories'),
+            where('community', '==', communityId),
         );
 
-        const querySnapshot = await getDocs(messagesQuery);
-        const messageList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setMessages(messageList);
+        const [messagesSnapshot, sentMessagesSnapshot] = await Promise.all([
+            getDocs(messagesQuery),
+            getDocs(sentMessagesQuery),
+        ]);
+
+        const receivedMessages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const sentMessages = sentMessagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const allCommunityMessages = [...receivedMessages, ...sentMessages];
+
+        const userMessages = allCommunityMessages.filter(msg => 
+            (msg.readBy?.some((r: any) => r.userId === memberId)) || (msg.sender === memberId)
+        );
+
+        userMessages.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+
+        setMessages(userMessages);
 
       } catch (error) {
         console.error("Error fetching messages:", error);
@@ -97,7 +113,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
                             From: {message.sender}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {message.createdAt?.toDate ? format(message.createdAt.toDate(), 'PPpp') : 'No date'}
+                            {message.createdAt?.seconds ? format(new Date(message.createdAt.seconds * 1000), 'PPpp') : 'No date'}
                         </p>
                     </div>
                 ))}
