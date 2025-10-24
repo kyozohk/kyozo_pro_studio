@@ -26,29 +26,26 @@ export default function MessageList({ firestore, memberId }: MessageListProps) {
       setLoading(true);
       try {
         const messagesRef = collection(firestore, 'messages');
-        // Fetch messages where the member is either the sender or receiver
-        const sentQuery = query(messagesRef, where('senderId', '==', memberId));
-        const receivedQuery = query(messagesRef, where('recipientId', '==', memberId));
+        
+        // As per the documentation, 'sender' is the sender's ID.
+        // There isn't a clear recipient field for DMs, so we will query based on sender.
+        // In a real scenario, we might need a composite query or a different data structure for 2-way chat.
+        // For now, we fetch where the user is the sender. A more complex query might be needed for full conversation history.
+        const sentQuery = query(messagesRef, where('sender', '==', memberId), orderBy('createdAt', 'desc'));
 
-        const [sentSnapshot, receivedSnapshot] = await Promise.all([
+        const [sentSnapshot] = await Promise.all([
             getDocs(sentQuery),
-            getDocs(receivedQuery),
         ]);
 
         const messageList: DocumentData[] = [];
         sentSnapshot.forEach(doc => messageList.push({ id: doc.id, ...doc.data() }));
-        receivedSnapshot.forEach(doc => {
-            if(!messageList.find(m => m.id === doc.id)) {
-                messageList.push({ id: doc.id, ...doc.data() });
-            }
-        });
         
-        // Assumption: messages have a 'createdAt' timestamp field
-        messageList.sort((a, b) => {
-            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-            return dateA.getTime() - dateB.getTime();
-        });
+        // Sorting is handled by the query, but if we were to merge multiple queries, we'd sort here.
+        // messageList.sort((a, b) => {
+        //     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        //     const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        //     return dateA.getTime() - dateB.getTime();
+        // });
 
         setMessages(messageList);
       } catch (error) {
@@ -84,6 +81,9 @@ export default function MessageList({ firestore, memberId }: MessageListProps) {
                     <div key={message.id} className="p-3 bg-muted/50 rounded-lg">
                         <p className="text-sm">{message.text || 'No content'}</p>
                         <p className="text-xs text-muted-foreground mt-2">
+                            From: {message.sender}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
                             {message.createdAt?.toDate ? format(message.createdAt.toDate(), 'PPpp') : 'No date'}
                         </p>
                     </div>
