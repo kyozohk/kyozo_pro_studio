@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleIcon } from './google-icon';
 import { Separator } from '../ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function SignUpForm() {
   const [isPending, startTransition] = useTransition();
@@ -20,6 +21,11 @@ export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [nameFocused, setNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
 
   const form = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
@@ -58,7 +64,13 @@ export default function SignUpForm() {
           id="name"
           placeholder=" "
           {...form.register('name')}
-          className={`peer ${form.formState.errors.name ? 'border-destructive' : 'border-input'}`}
+          onFocus={() => setNameFocused(true)}
+          onBlur={() => setNameFocused(false)}
+          className={cn(
+              'peer', 
+              form.formState.errors.name ? 'border-destructive' : 'border-input',
+              nameFocused && 'gradient-border'
+            )}
         />
         <Label htmlFor="name">Your Name</Label>
         {form.formState.errors.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.name.message}</p>}
@@ -70,7 +82,13 @@ export default function SignUpForm() {
           type="email"
           placeholder=" "
           {...form.register('email')}
-          className={`peer ${form.formState.errors.email ? 'border-destructive' : 'border-input'}`}
+          onFocus={() => setEmailFocused(true)}
+          onBlur={() => setEmailFocused(false)}
+          className={cn(
+              'peer', 
+              form.formState.errors.email ? 'border-destructive' : 'border-input',
+              emailFocused && 'gradient-border'
+            )}
         />
         <Label htmlFor="email">Your Email</Label>
         {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
@@ -82,7 +100,13 @@ export default function SignUpForm() {
           type={showPassword ? 'text' : 'password'}
           placeholder=" "
           {...form.register('password')}
-          className={`peer ${form.formState.errors.password ? 'border-destructive' : 'border-input'}`}
+          onFocus={() => setPasswordFocused(true)}
+          onBlur={() => setPasswordFocused(false)}
+          className={cn(
+            'peer', 
+            form.formState.errors.password ? 'border-destructive' : 'border-input',
+            passwordFocused && 'gradient-border'
+            )}
         />
         <Label htmlFor="password">Create a password</Label>
         <button
@@ -102,7 +126,13 @@ export default function SignUpForm() {
           type={showConfirmPassword ? 'text' : 'password'}
           placeholder=" "
           {...form.register('confirmPassword')}
-          className={`peer ${form.formState.errors.confirmPassword ? 'border-destructive' : 'border-input'}`}
+          onFocus={() => setConfirmPasswordFocused(true)}
+          onBlur={() => setConfirmPasswordFocused(false)}
+          className={cn(
+            'peer', 
+            form.formState.errors.confirmPassword ? 'border-destructive' : 'border-input',
+            confirmPasswordFocused && 'gradient-border'
+            )}
         />
         <Label htmlFor="confirmPassword">Please confirm your password</Label>
         <button

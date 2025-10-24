@@ -10,11 +10,14 @@ import { useState, useTransition } from "react";
 import { handleSignIn } from "@/firebase/auth/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function SignInForm() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
+    const [emailFocused, setEmailFocused] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
   
     const form = useForm<SignInInput>({
       resolver: zodResolver(signInSchema),
@@ -56,7 +59,13 @@ export default function SignInForm() {
             type="email"
             placeholder=" "
             {...form.register("email")}
-            className={`peer ${form.formState.errors.email ? 'border-destructive' : ''}`}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
+            className={cn(
+                'peer',
+                form.formState.errors.email ? 'border-destructive' : '',
+                emailFocused && 'gradient-border'
+            )}
           />
           <Label htmlFor="email">Your Email</Label>
           {form.formState.errors.email && <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>}
@@ -67,7 +76,13 @@ export default function SignInForm() {
             type="password"
             placeholder=" "
             {...form.register("password")}
-            className={`peer ${form.formState.errors.password ? 'border-destructive' : ''}`}
+            onFocus={() => setPasswordFocused(true)}
+            onBlur={() => setPasswordFocused(false)}
+            className={cn(
+                'peer',
+                form.formState.errors.password ? 'border-destructive' : '',
+                passwordFocused && 'gradient-border'
+            )}
           />
           <Label htmlFor="password">Password</Label>
           {form.formState.errors.password && <p className="text-xs text-destructive mt-1">{form.formState.errors.password.message}</p>}
