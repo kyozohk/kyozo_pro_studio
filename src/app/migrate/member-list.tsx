@@ -180,9 +180,9 @@ export default function MemberList({
                         const joinDate = member.joinDate ? format(new Date(member.joinDate), 'PP') : '-';
                         return (
                             <li key={member.id}>
-                                <button 
+                                <div 
                                     className={cn(
-                                        "w-full text-left p-3 rounded-lg hover:bg-muted/40 transition-colors flex items-center gap-4",
+                                        "w-full text-left p-3 rounded-lg hover:bg-muted/40 transition-colors flex items-center gap-4 cursor-pointer",
                                         "bg-card/50",
                                         selectedMemberId === member.id && "bg-primary/10"
                                     )}
@@ -216,7 +216,7 @@ export default function MemberList({
                                             </div>
                                         )}
                                     </div>
-                                </button>
+                                </div>
                             </li>
                         )
                     })}
