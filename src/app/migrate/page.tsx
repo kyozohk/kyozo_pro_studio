@@ -107,10 +107,10 @@ export default function MigratePage() {
     <SidebarProvider>
     <Sidebar side="left" collapsible="icon">
       <SidebarHeader className="border-b">
-        <div className="flex h-12 items-center justify-between px-2">
-          <div className="flex items-center gap-2 [&>svg]:hidden group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
-            <Logo />
-          </div>
+        <div className="flex h-14 items-center justify-between px-4">
+            <div className="group-[[data-state=expanded]]/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0 transition-opacity duration-200">
+                <Logo />
+            </div>
           <SidebarTrigger className="ml-auto" />
         </div>
       </SidebarHeader>
@@ -142,14 +142,14 @@ export default function MigratePage() {
             </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-        <SidebarFooter className="flex items-center gap-2 p-2">
+      <SidebarFooter className="flex items-center gap-3 p-3">
            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-10 w-10 rounded-full"
+                  className="relative size-10 rounded-full"
                 >
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="size-10">
                     <AvatarImage
                       src={user.photoURL || undefined}
                       alt={user.displayName || 'User'}
@@ -174,11 +174,9 @@ export default function MigratePage() {
         </SidebarFooter>
     </Sidebar>
     <SidebarInset>
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
         <div className="md:hidden">
           <SidebarTrigger />
-        </div>
-        <div className="ml-auto flex items-center gap-4">
         </div>
       </header>
       <main className="flex-1 p-4 sm:p-6">
