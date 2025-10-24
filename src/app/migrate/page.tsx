@@ -174,11 +174,6 @@ export default function MigratePage() {
         </SidebarFooter>
     </Sidebar>
     <SidebarInset>
-      <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
-        <div className="md:hidden">
-          <SidebarTrigger />
-        </div>
-      </header>
       <main className="flex-1 p-4 sm:p-6">
           <div className="max-w-6xl mx-auto text-center mb-6">
               <h1 className="font-headline text-4xl font-bold">Database Migration Explorer</h1>
@@ -197,7 +192,7 @@ export default function MigratePage() {
               </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-[3fr,5fr] gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-[2fr,5fr] gap-8 max-w-7xl mx-auto">
               <CommunityList 
                   firestore={oldFirestore} 
                   onSelectCommunity={handleSelectCommunity} 

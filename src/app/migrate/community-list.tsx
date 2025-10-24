@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Folder, Search } from 'lucide-react';
+import { Folder, Search, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -96,7 +96,13 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
                     )}
                     onClick={() => onSelectCommunity(community)}
                   >
-                    <p className="font-semibold truncate">{community.name || 'Unnamed Community'}</p>
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold truncate">{community.name || 'Unnamed Community'}</p>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Users size={12} />
+                        <span>{community.usersList?.length || 0}</span>
+                      </div>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{community.id}</p>
                   </button>
                 </li>
