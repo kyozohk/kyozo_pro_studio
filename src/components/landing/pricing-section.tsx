@@ -1,14 +1,23 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { pricingData } from '@/lib/pricing-data';
 import PricingCard from '@/components/ui/pricing-card';
 import styles from './PricingSection.module.css';
 import { Button } from "@/components/ui/button";
 
+const PriceCircles = dynamic(() => import('./price-circles'), {
+  ssr: false,
+  loading: () => <div className={styles.background} />,
+});
+
 const PricingSection = () => {
   return (
     <section className={styles.pricingSection}>
+        <div className={styles.background}>
+            <PriceCircles />
+        </div>
       <div className={styles.content}>
         <div className={styles.header}>
           <h2>Flexible Pricing for Every Creator</h2>
