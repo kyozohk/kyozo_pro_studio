@@ -30,43 +30,44 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
       try {
         const messagesRef = collection(firestore, 'messages');
         
-        // As per the schema, we need to find messages where the selected member is either the sender or part of the recipients.
-        // The old schema might use a simple `recipientId` for 1-on-1 or `recipients` array for group.
-        // We will query for messages where the member is either the sender or the recipient.
+        // Query for messages where the member is either the sender OR the recipient.
         const messagesQuery = query(
             messagesRef, 
             where('community', '==', communityId),
             or(
               where('sender', '==', memberId),
-              where('recipientId', '==', memberId) // Assuming recipientId exists for direct messages
+              where('recipientId', '==', memberId)
             ),
             orderBy('createdAt', 'desc')
         );
 
         const querySnapshot = await getDocs(messagesQuery);
-
         const messageList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        setMessages(messageList);
+        // As a fallback, if the above query returns nothing, try with `readBy` as per the newer schema structure.
+        if(messageList.length > 0) {
+            setMessages(messageList);
+        } else {
+            try {
+                const fallbackQuery = query(
+                    collection(firestore, 'messages'),
+                    where('community', '==', communityId),
+                    where('readBy', 'array-contains', { userId: memberId }),
+                    orderBy('createdAt', 'desc')
+                );
+                const fallbackSnapshot = await getDocs(fallbackQuery);
+                const fallbackMessageList = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setMessages(fallbackMessageList);
+    
+            } catch (fallbackError) {
+                 console.error("Fallback query for messages also failed:", fallbackError);
+                 setMessages([]);
+            }
+        }
+
       } catch (error) {
         console.error("Error fetching messages:", error);
-        // Fallback or secondary query if the first fails.
-        // This might happen if 'recipientId' doesn't exist. Let's try with 'readBy' as a fallback.
-        try {
-            const fallbackQuery = query(
-                collection(firestore, 'messages'),
-                where('community', '==', communityId),
-                where('readBy', 'array-contains', { userId: memberId }),
-                orderBy('createdAt', 'desc')
-            );
-            const fallbackSnapshot = await getDocs(fallbackQuery);
-            const fallbackMessageList = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMessages(fallbackMessageList);
-
-        } catch (fallbackError) {
-             console.error("Fallback query for messages also failed:", fallbackError);
-             setMessages([]);
-        }
+        setMessages([]);
       } finally {
         setLoading(false);
       }

@@ -27,6 +27,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
 
     const fetchMembers = async () => {
       setLoading(true);
+      // Use the usersList array from the community document
       const userIds = community.usersList?.map((u: any) => u.userId) || [];
       
       if (userIds.length === 0) {
@@ -36,6 +37,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
       }
       
       try {
+        // Fetch each user document by its ID
         const memberPromises = userIds.map((id: string) => getDoc(doc(firestore, 'users', id)));
         const memberSnapshots = await Promise.all(memberPromises);
         const memberList = memberSnapshots
@@ -57,6 +59,7 @@ export default function MemberList({ firestore, community, onSelectMember, selec
   const filteredMembers = useMemo(() => {
     if (!searchTerm) return members;
     return members.filter(member => {
+      // Handle various possible name fields from the old schema
       const name = member.fullName || member.displayName || member.tempFullName || '';
       return name.toLowerCase().includes(searchTerm.toLowerCase());
     });
