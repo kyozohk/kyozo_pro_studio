@@ -1,11 +1,10 @@
 import Header from '@/components/landing/header';
 import HeroSection from '@/components/landing/hero-section';
 import FeatureCard from '@/components/landing/feature-card';
-import FeaturesSection from '@/components/landing/features-section';
-import PricingSection from '@/components/landing/pricing-section';
 import ScrollRevealText from '@/components/landing/scroll-reveal-text';
 import SlidingCards from '@/components/landing/sliding-cards';
 import SlidingCardItem from '@/components/landing/sliding-card-item';
+import Toolkit from '@/components/landing/toolkit';
 
 export default function Home() {
   return (
@@ -37,8 +36,7 @@ export default function Home() {
             color="purple"
           />
         </SlidingCards>
-        <FeaturesSection />
-        <PricingSection />
+        <Toolkit />
       </main>
     </div>
   );
