@@ -9,6 +9,7 @@ import Toolkit from '@/components/landing/toolkit';
 import Marquee from '@/components/landing/marquee';
 import PricingSection from '@/components/landing/pricing-section';
 import VideoWall from '@/components/landing/video-wall';
+import BottomText from '@/components/landing/bottom-text';
 
 export default function Home() {
   return (
@@ -77,6 +78,7 @@ export default function Home() {
           ]}
         />
         <PricingSection />
+        <BottomText text="Join the creative universe" />
       </main>
     </div>
   );
