@@ -4,8 +4,8 @@ import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
 
-import { initializeApp, getApps, getApp, App } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { initializeFirebase } from '@/firebase';
+import { getFirestore, writeBatch, doc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 
 
 export async function joinWaitlist(data: WaitlistInput) {
@@ -43,15 +43,11 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 }
 
 export async function exportCommunity(communityData: any, members: any[]) {
-    let adminApp: App;
-    const adminAppName = 'admin';
-
-    if (getApps().some(app => app.name === adminAppName)) {
-      adminApp = getApp(adminAppName);
-    } else {
-      adminApp = initializeApp({}, adminAppName);
+    // Use the client SDK for writes, assuming rules allow it.
+    const { firestore } = initializeFirebase();
+    if (!firestore) {
+      return { success: false, message: 'Firestore is not initialized.' };
     }
-    const newDb = getFirestore(adminApp);
     
     try {
         const tenantId = communityData.owner;
@@ -59,21 +55,21 @@ export async function exportCommunity(communityData: any, members: any[]) {
             throw new Error('Community data does not have an owner ID.');
         }
 
-        const batch = newDb.batch();
+        const batch = writeBatch(firestore);
 
         // 1. Create/update tenant document
-        const tenantRef = newDb.collection('tenants').doc(tenantId);
+        const tenantRef = doc(firestore, 'tenants', tenantId);
         batch.set(tenantRef, {
             tenantId: tenantId,
             name: 'Migrated Tenant', // Placeholder
             email: 'owner@example.com', // Placeholder
             subscription: { plan: 'pro', status: 'active' },
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
         }, { merge: true });
 
         // 2. Create community document
-        const communityRef = tenantRef.collection('communities').doc(communityData.id);
+        const communityRef = doc(tenantRef, 'communities', communityData.id);
         batch.set(communityRef, {
             communityId: communityData.id,
             name: communityData.name,
@@ -86,8 +82,8 @@ export async function exportCommunity(communityData: any, members: any[]) {
             visibility: communityData.communityPrivacy || 'private',
             memberCount: members.length,
             createdBy: tenantId,
-            createdAt: communityData.createdAt ? new Date(communityData.createdAt) : FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
+            createdAt: communityData.createdAt ? new Date(communityData.createdAt) : serverTimestamp(),
+            updatedAt: serverTimestamp(),
         });
 
         // 3. Process members
@@ -95,42 +91,26 @@ export async function exportCommunity(communityData: any, members: any[]) {
              const memberId = member.id;
              
              // Create/update global user record
-             const userRef = newDb.collection('users').doc(memberId);
+             const userRef = doc(firestore, 'users', memberId);
              batch.set(userRef, {
                  userId: memberId,
-                 basicProfile: {
-                     name: member.fullName || member.tempFullName || 'Unknown User',
-                     email: member.email || null,
-                     phone: member.phoneNumber || null,
-                 },
-                 tenants: FieldValue.arrayUnion(tenantId),
-                 createdAt: FieldValue.serverTimestamp(),
-                 updatedAt: FieldValue.serverTimestamp(),
+                 displayName: member.fullName || member.tempFullName || 'Unknown User',
+                 email: member.email || null,
+                 photoURL: member.profileImage || member.photoURL || null,
+                 tenants: arrayUnion(tenantId),
              }, { merge: true });
-
-             // Create tenant-specific member record
-             const tenantMemberRef = tenantRef.collection('members').doc(memberId);
-             batch.set(tenantMemberRef, {
-                 memberId: memberId,
-                 profile: {
-                    name: member.fullName || member.tempFullName || 'Unknown User',
-                    email: member.email || null,
-                    phone: member.phoneNumber || null,
-                    avatarUrl: member.profileImage || member.photoURL || null,
-                 },
-                 communities: FieldValue.arrayUnion(communityData.id),
-                 createdAt: FieldValue.serverTimestamp(),
-                 updatedAt: FieldValue.serverTimestamp(),
-             }, { merge: true });
+             
+             // In new schema, we don't have a separate tenant member record,
+             // user profile and community membership is enough.
 
              // Create community membership record
-             const membershipRef = communityRef.collection('memberships').doc(memberId);
+             const membershipRef = doc(communityRef, 'memberships', memberId);
              const userInCommunity = communityData.usersList.find((u:any) => u.userId === memberId);
              batch.set(membershipRef, {
                  memberId: memberId,
-                 joinDate: userInCommunity?.joinedAt ? new Date(userInCommunity.joinedAt) : FieldValue.serverTimestamp(),
+                 joinDate: userInCommunity?.joinedAt ? new Date(userInCommunity.joinedAt) : serverTimestamp(),
                  status: userInCommunity?.approvalStatus || 'active',
-                 role: 'member', // Placeholder
+                 role: 'member', // Placeholder, can be refined
              });
         }
         
