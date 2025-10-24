@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-1",
+      "description": "A musician performing on stage with a guitar.",
+      "imageUrl": "https://images.unsplash.com/photo-1706990492420-f76fb1dabe9e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtdXNpY2lhbiUyMGNvbmNlcnR8ZW58MHx8fHwxNzYxMzA2MTM4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "musician concert"
+    },
+    {
+      "id": "hero-2",
+      "description": "A person posing in a high-fashion outfit.",
+      "imageUrl": "https://images.unsplash.com/photo-1611042553484-d61f84d22784?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmYXNoaW9uJTIwbW9kZWx8ZW58MHx8fHwxNzYxMjE0MzQwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fashion model"
+    },
+    {
+      "id": "hero-3",
+      "description": "An abstract painting in an art gallery.",
+      "imageUrl": "https://images.unsplash.com/photo-1605429523419-d828acb941d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhcnQlMjBnYWxsZXJ5fGVufDB8fHx8MTc2MTI1NjY3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "art gallery"
+    },
+    {
+      "id": "hero-4",
+      "description": "A vibrant cultural festival with many people.",
+      "imageUrl": "https://images.unsplash.com/photo-1593249992832-c8f5fc8f2f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjdWx0dXJhbCUyMGZlc3RpdmFsfGVufDB8fHx8MTc2MTMwNjEzOHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cultural festival"
+    }
+  ]
 }
