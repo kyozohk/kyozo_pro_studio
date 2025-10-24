@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Label } from '@/components/ui/label';
 
 interface MemberListProps {
   firestore: Firestore;
@@ -64,7 +65,8 @@ export default function MemberList({
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'icon'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'icon'>('icon');
+  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     if (!community) {
@@ -135,15 +137,19 @@ export default function MemberList({
     <Card className="flex flex-col bg-transparent border-0 shadow-none">
       <CardHeader className="px-0">
         <div className="flex items-center gap-2">
-            <div className="relative flex items-center flex-1">
+            <div className={cn("relative input-container flex items-center flex-1", searchFocused && 'gradient-border', 'rounded-md')}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <Input 
-                    placeholder="Search members..."
+                    id="member-search"
+                    placeholder=" "
                     className="pl-10 h-9 bg-muted/40 border-0"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     disabled={!community}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
                 />
+                <Label htmlFor="member-search" className="left-10">Search members...</Label>
             </div>
             <div className='flex items-center gap-1 bg-muted/40 p-1 rounded-lg'>
                 <Button variant={viewMode === 'list' ? 'primary' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => setViewMode('list')}>
@@ -216,27 +222,49 @@ export default function MemberList({
                     })}
                     </ul>
                 ) : (
-                    <TooltipProvider>
-                        <div className="grid grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-4 pr-2">
-                            {filteredMembers.map((member) => {
-                                const name = member.fullName || member.displayName || member.tempFullName || 'Unknown User';
-                                return (
-                                    <Tooltip key={member.id}>
-                                        <TooltipTrigger asChild>
-                                            <button onClick={() => onSelectMember(member)}>
-                                                <Avatar className={cn("h-12 w-12 text-lg bg-primary/20 text-primary-foreground border-2 border-transparent", selectedMemberId === member.id && "border-primary")}>
-                                                    <AvatarFallback>{getInitials(name)}</AvatarFallback>
-                                                </Avatar>
-                                            </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>{name}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                )
-                            })}
-                        </div>
-                    </TooltipProvider>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pr-2">
+                        {filteredMembers.map((member) => {
+                            const name = member.fullName || member.displayName || member.tempFullName || 'Unknown User';
+                            const role = member.role || 'Member';
+                            const status = member.status || 'active';
+                            return (
+                                <button
+                                    key={member.id}
+                                    onClick={() => onSelectMember(member)}
+                                    className={cn(
+                                        "p-4 rounded-lg text-left transition-all",
+                                        "bg-card/50 hover:bg-muted/40",
+                                        selectedMemberId === member.id && "bg-primary/10 ring-2 ring-primary"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <Avatar className="h-12 w-12 text-xl bg-primary/20 text-primary-foreground">
+                                            <AvatarFallback>{getInitials(name)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className='flex-1'>
+                                            <p className="font-semibold truncate">{name}</p>
+                                            <p className="text-sm text-muted-foreground capitalize">{role}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm mb-3">
+                                        <Badge variant={status === 'active' ? 'success' : 'secondary'} className="capitalize">{status}</Badge>
+                                        {showJoiningDate && member.joinDate && <span className="text-xs text-muted-foreground">{format(new Date(member.joinDate), 'PP')}</span>}
+                                    </div>
+                                    {showActions && (
+                                        <div className="flex justify-end items-center gap-2 text-muted-foreground pt-3 border-t border-muted/20">
+                                            <TooltipProvider>
+                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><Edit size={16} /></button></TooltipTrigger><TooltipContent><p>Edit</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><MessageSquare size={16} /></button></TooltipTrigger><TooltipContent><p>Message</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><Phone size={16} /></button></TooltipTrigger><TooltipContent><p>Call</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><Mail size={16} /></button></TooltipTrigger><TooltipContent><p>Email</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-destructive"><Trash2 size={16} /></button></TooltipTrigger><TooltipContent><p>Delete</p></TooltipContent></Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                    )}
+                                </button>
+                            )
+                        })}
+                    </div>
                 )
              ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">

@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
 
 interface CommunityListProps {
   firestore: Firestore;
@@ -31,6 +32,8 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
   const [communities, setCommunities] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+
 
   useEffect(() => {
     const fetchCommunities = async () => {
@@ -64,14 +67,18 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
             </div>
             <span className="text-sm font-normal text-muted-foreground">{filteredCommunities.length} / {communities.length}</span>
         </CardTitle>
-        <div className="relative flex items-center">
+        <div className={cn("relative input-container flex items-center", searchFocused && 'gradient-border', 'rounded-md')}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-                placeholder="Type to search..."
-                className="pl-10 h-9"
+            <Input
+                id="community-search"
+                placeholder=" "
+                className="pl-10 h-9 border-0"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
             />
+             <Label htmlFor="community-search" className="left-10">Type to search...</Label>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">

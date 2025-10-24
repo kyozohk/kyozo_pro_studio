@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Mail, User } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -29,6 +29,11 @@ export function WaitlistForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const [formSubmitted, setFormSubmitted] = useState(false);
+
+  const [firstNameFocused, setFirstNameFocused] = useState(false);
+  const [lastNameFocused, setLastNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [phoneFocused, setPhoneFocused] = useState(false);
 
   const form = useForm<WaitlistInput>({
     resolver: zodResolver(waitlistSchema),
@@ -91,25 +96,29 @@ export function WaitlistForm() {
           </TabsList>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" {...form.register('firstName')} placeholder="Jane" />
-                {form.formState.errors.firstName && <p className="text-sm text-red-500">{form.formState.errors.firstName.message}</p>}
+              <div className={cn("relative input-container flex items-center", firstNameFocused && 'gradient-border', 'rounded-md')}>
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input id="firstName" {...form.register('firstName')} placeholder=" " className="pl-10 border-0" onFocus={() => setFirstNameFocused(true)} onBlur={() => setFirstNameFocused(false)} />
+                <Label htmlFor="firstName" className="left-10">First Name</Label>
+                {form.formState.errors.firstName && <p className="text-sm text-red-500 absolute -bottom-5">{form.formState.errors.firstName.message}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" {...form.register('lastName')} placeholder="Doe" />
-                {form.formState.errors.lastName && <p className="text-sm text-red-500">{form.formState.errors.lastName.message}</p>}
+              <div className={cn("relative input-container flex items-center", lastNameFocused && 'gradient-border', 'rounded-md')}>
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input id="lastName" {...form.register('lastName')} placeholder=" " className="pl-10 border-0" onFocus={() => setLastNameFocused(true)} onBlur={() => setLastNameFocused(false)} />
+                <Label htmlFor="lastName" className="left-10">Last Name</Label>
+                {form.formState.errors.lastName && <p className="text-sm text-red-500 absolute -bottom-5">{form.formState.errors.lastName.message}</p>}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...form.register('email')} placeholder="jane.doe@example.com" />
-              {form.formState.errors.email && <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>}
+            <div className={cn("relative input-container flex items-center", emailFocused && 'gradient-border', 'rounded-md')}>
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input id="email" type="email" {...form.register('email')} placeholder=" " className="pl-10 border-0" onFocus={() => setEmailFocused(true)} onBlur={() => setEmailFocused(false)} />
+                <Label htmlFor="email" className="left-10">Your Email</Label>
+                {form.formState.errors.email && <p className="text-sm text-red-500 absolute -bottom-5">{form.formState.errors.email.message}</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (Optional)</Label>
-              <Input id="phone" type="tel" {...form.register('phone')} placeholder="+1 (555) 123-4567" />
+            <div className={cn("relative input-container flex items-center", phoneFocused && 'gradient-border', 'rounded-md')}>
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                <Input id="phone" type="tel" {...form.register('phone')} placeholder=" " className="pl-10 border-0" onFocus={() => setPhoneFocused(true)} onBlur={() => setPhoneFocused(false)} />
+                <Label htmlFor="phone" className="left-10">Phone Number (Optional)</Label>
             </div>
             <div className="space-y-3">
               <Label>What are your interests?</Label>

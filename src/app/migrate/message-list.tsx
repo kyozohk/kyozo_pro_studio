@@ -7,6 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 interface MessageListProps {
   firestore: Firestore;
@@ -30,6 +32,7 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
   const [messages, setMessages] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,15 +122,19 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
             </div>
             <span className="text-sm font-normal text-muted-foreground">{filteredMessages.length} / {messages.length}</span>
         </CardTitle>
-        <div className="relative flex items-center">
+        <div className={cn("relative input-container flex items-center", searchFocused && 'gradient-border', 'rounded-md')}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input 
-                placeholder="Search messages..."
-                className="pl-10 h-9"
+                id="message-search"
+                placeholder=" "
+                className="pl-10 h-9 border-0"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 disabled={!memberId}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
             />
+            <Label htmlFor="message-search" className="left-10">Search messages...</Label>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
