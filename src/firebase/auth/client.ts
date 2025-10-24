@@ -8,9 +8,19 @@ import {
 } from 'firebase/auth';
 
 const provider = new GoogleAuthProvider();
+provider.setCustomParameters({
+  prompt: 'select_account',
+});
+
+// Set the branding for the sign-in pop-up
+provider.setCustomParameters({
+  'login_hint': 'user@example.com',
+  'hd': 'example.com', // Optionally, restrict to a G Suite domain
+});
 
 export function handleSignIn() {
   const auth = getAuth();
+  auth.tenantId = firebaseConfig.authDomain;
   signInWithPopup(auth, provider)
     .then(result => {
       // This gives you a Google Access Token. You can use it to access the Google API.
@@ -36,3 +46,14 @@ export function handleSignOut() {
   const auth = getAuth();
   signOut(auth);
 }
+
+// Helper to get the firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyALpnr-pNEyAQUgYBgVwfDIguJ_lu7_KQY",
+  authDomain: "kyozo-prod.firebaseapp.com",
+  projectId: "kyozo-prod",
+  storageBucket: "kyozo-prod.appspot.com",
+  messagingSenderId: "480316724826",
+  appId: "1:480316724826:web:152538c6412b7a97c23f13",
+  measurementId: "G-93V44B5N0G"
+};
