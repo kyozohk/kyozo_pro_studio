@@ -4,21 +4,25 @@ import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
 
-import { initializeApp, getApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApp, getApps, type App } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
-// Initialize Firebase Admin SDK for server-side operations
-try {
+// Helper function to initialize Firebase Admin SDK and get DB instance
+function getAdminDb() {
     const appName = 'admin';
-    if (!getApps().some(app => app.name === appName)) {
-        initializeApp({
-            credential: undefined, // Assumes application default credentials on the server
+    let app: App;
+
+    if (!getApps().some(existingApp => existingApp.name === appName)) {
+        app = initializeApp({
+            // Assumes application default credentials on the server
+            // Ensure your hosting environment has the correct permissions
             databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
         }, appName);
+    } else {
+        app = getApp(appName);
     }
-} catch (e) {
-    console.error('Firebase Admin initialization error:', e);
+    return getFirestore(app);
 }
 
 
@@ -57,9 +61,8 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 }
 
 export async function exportCommunity(communityData: any, members: any[]) {
-    const newDb = getFirestore('admin');
-
     try {
+        const newDb = getAdminDb();
         const tenantId = communityData.owner;
         if (!tenantId) {
             throw new Error('Community data does not have an owner ID.');
