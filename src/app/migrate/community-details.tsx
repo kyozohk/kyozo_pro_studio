@@ -2,17 +2,40 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Code } from "lucide-react";
+import { Code, Clipboard, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommunityDetailsProps {
     communityData: any;
 }
 
 export default function CommunityDetails({ communityData }: CommunityDetailsProps) {
+    const [copied, setCopied] = useState(false);
+    const { toast } = useToast();
+
+    const handleCopy = () => {
+        if (!communityData) return;
+        const jsonString = JSON.stringify(communityData, null, 2);
+        navigator.clipboard.writeText(jsonString).then(() => {
+            setCopied(true);
+            toast({ title: "Copied!", description: "Community data copied to clipboard." });
+            setTimeout(() => setCopied(false), 2000);
+        }, (err) => {
+            console.error('Could not copy text: ', err);
+            toast({ variant: "destructive", title: "Failed to copy", description: "Could not copy data to clipboard." });
+        });
+    };
+
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2"><Code /> Selected Community Data</CardTitle>
+                <Button variant="outline" size="icon" onClick={handleCopy} disabled={!communityData}>
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Clipboard className="h-4 w-4" />}
+                    <span className="sr-only">Copy JSON</span>
+                </Button>
             </CardHeader>
             <CardContent>
                 {communityData ? (
