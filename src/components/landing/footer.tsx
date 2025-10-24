@@ -18,42 +18,19 @@ const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Auto-redirect authenticated users to dashboard
+  // Auto-redirect authenticated users to dashboard from home page
   useEffect(() => {
-    if (user && (pathname === '/' || pathname === '/login' || pathname === '/signup')) {
-      console.log('🔵 User authenticated, redirecting to dashboard');
+    if (user && pathname === '/') {
       router.push('/dashboard');
     }
   }, [user, router, pathname]);
 
   const openDialog = () => {
     if (!user) {
-      console.log('🔵 User not logged in, opening sign-in dialog');
       setIsDialogOpen(true);
     } else {
-      console.log('🔵 User already logged in, redirecting to dashboard');
       router.push('/dashboard');
-    }
-  };
-
-  const closeDialog = () => {
-    console.log('🔵 Closing dialog');
-    setIsDialogOpen(false);
-  };
-
-  const handleLogout = async () => {
-    console.log('🔵 User logging out...');
-    setIsLoggingOut(true);
-    try {
-      await handleSignOut();
-      console.log('🔵 User logged out successfully');
-      router.push('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoggingOut(false);
     }
   };
 
@@ -71,25 +48,14 @@ const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
                 />
              </Link>
             {user ? (
-               <div className="flex items-center gap-2">
                 <Button 
-                    variant="ghost" 
+                    variant="default" 
                     onClick={() => router.push('/dashboard')}
                     className={styles.joinButton}
                     size="sm"
                 >
                     Dashboard
                 </Button>
-                <Button 
-                    variant="ghost" 
-                    onClick={handleLogout}
-                    className={styles.joinButton}
-                    size="sm"
-                    disabled={isLoggingOut}
-                >
-                    {isLoggingOut ? 'Logging out...' : 'Sign Out'}
-                </Button>
-              </div>
             ) : (
               <Button 
                 variant="default" 

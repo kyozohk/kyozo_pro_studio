@@ -3,7 +3,7 @@
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, Database } from 'lucide-react';
+import { Loader2, Database, Settings } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
-import { LogOut, Home, Users, Settings } from 'lucide-react';
+import { LogOut, Home, Users } from 'lucide-react';
 import DashboardWelcome from '@/components/dashboard/welcome';
 import CommunityList from '@/components/dashboard/community-list';
 
@@ -90,6 +90,12 @@ export default function DashboardPage() {
                 Migrate
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton href="#">
+                <Settings />
+                Settings
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="flex items-center gap-2 p-2">
@@ -121,10 +127,6 @@ export default function DashboardPage() {
                 <p className="text-sm font-semibold">{user.displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Settings className="h-5 w-5" />
-              <span className="sr-only">Settings</span>
-            </Button>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

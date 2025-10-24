@@ -88,6 +88,12 @@ export default function ModerationPage() {
                 Migrate
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton href="#">
+                <Settings />
+                Settings
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="flex items-center gap-2 p-2">
@@ -119,10 +125,6 @@ export default function ModerationPage() {
                 <p className="text-sm font-semibold">{user.displayName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
-              <Settings className="h-5 w-5" />
-              <span className="sr-only">Settings</span>
-            </Button>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
