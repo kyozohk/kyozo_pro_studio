@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { collection, query, where, getDocs, orderBy, type DocumentData, type Firestore, or } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, type DocumentData, type Firestore } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, MessageSquare, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,42 +28,16 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const messagesRef = collection(firestore, 'messages');
-        
-        // Query for messages where the member is either the sender OR the recipient.
         const messagesQuery = query(
-            messagesRef, 
+            collection(firestore, 'messages'),
             where('community', '==', communityId),
-            or(
-              where('sender', '==', memberId),
-              where('recipientId', '==', memberId)
-            ),
+            where('readBy', 'array-contains', { userId: memberId }),
             orderBy('createdAt', 'desc')
         );
 
         const querySnapshot = await getDocs(messagesQuery);
         const messageList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // As a fallback, if the above query returns nothing, try with `readBy` as per the newer schema structure.
-        if(messageList.length > 0) {
-            setMessages(messageList);
-        } else {
-            try {
-                const fallbackQuery = query(
-                    collection(firestore, 'messages'),
-                    where('community', '==', communityId),
-                    where('readBy', 'array-contains', { userId: memberId }),
-                    orderBy('createdAt', 'desc')
-                );
-                const fallbackSnapshot = await getDocs(fallbackQuery);
-                const fallbackMessageList = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setMessages(fallbackMessageList);
-    
-            } catch (fallbackError) {
-                 console.error("Fallback query for messages also failed:", fallbackError);
-                 setMessages([]);
-            }
-        }
+        setMessages(messageList);
 
       } catch (error) {
         console.error("Error fetching messages:", error);
