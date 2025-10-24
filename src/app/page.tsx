@@ -1,3 +1,4 @@
+'use client';
 import Header from '@/components/landing/header';
 import HeroSection from '@/components/landing/hero-section';
 import FeatureCard from '@/components/landing/feature-card';
@@ -6,6 +7,7 @@ import SlidingCards from '@/components/landing/sliding-cards';
 import SlidingCardItem from '@/components/landing/sliding-card-item';
 import Toolkit from '@/components/landing/toolkit';
 import Marquee from '@/components/landing/marquee';
+import PricingSection from '@/components/landing/pricing-section';
 
 export default function Home() {
   return (
@@ -69,6 +71,7 @@ export default function Home() {
             }       
           ]}
         />
+        <PricingSection />
       </main>
     </div>
   );

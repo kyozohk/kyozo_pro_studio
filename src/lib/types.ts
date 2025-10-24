@@ -30,3 +30,14 @@ export const signInSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 export type SignInInput = z.infer<typeof signInSchema>;
+
+
+export interface PricingCardData {
+  title: string;
+  subtitle: string;
+  price: string;
+  priceDescription: string;
+  features: string[];
+  gradient: string;
+  subtitleColor: string;
+}
