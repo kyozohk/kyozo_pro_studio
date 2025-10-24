@@ -8,16 +8,17 @@ import { format } from 'date-fns';
 
 interface MessageListProps {
   firestore: Firestore;
+  communityId: string | null;
   memberId: string | null;
 }
 
-export default function MessageList({ firestore, memberId }: MessageListProps) {
+export default function MessageList({ firestore, communityId, memberId }: MessageListProps) {
   const [messages, setMessages] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!memberId) {
+    if (!memberId || !communityId) {
       setMessages([]);
       return;
     }
@@ -27,25 +28,18 @@ export default function MessageList({ firestore, memberId }: MessageListProps) {
       try {
         const messagesRef = collection(firestore, 'messages');
         
-        // As per the documentation, 'sender' is the sender's ID.
-        // There isn't a clear recipient field for DMs, so we will query based on sender.
-        // In a real scenario, we might need a composite query or a different data structure for 2-way chat.
-        // For now, we fetch where the user is the sender. A more complex query might be needed for full conversation history.
-        const sentQuery = query(messagesRef, where('sender', '==', memberId), orderBy('createdAt', 'desc'));
+        // As per the documentation, query messages where 'community' is the communityId
+        // and 'readBy' array-contains the memberId.
+        const messagesQuery = query(
+            messagesRef, 
+            where('community', '==', communityId), 
+            where('readBy', 'array-contains', { userId: memberId }),
+            orderBy('createdAt', 'desc')
+        );
 
-        const [sentSnapshot] = await Promise.all([
-            getDocs(sentQuery),
-        ]);
+        const querySnapshot = await getDocs(messagesQuery);
 
-        const messageList: DocumentData[] = [];
-        sentSnapshot.forEach(doc => messageList.push({ id: doc.id, ...doc.data() }));
-        
-        // Sorting is handled by the query, but if we were to merge multiple queries, we'd sort here.
-        // messageList.sort((a, b) => {
-        //     const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-        //     const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-        //     return dateA.getTime() - dateB.getTime();
-        // });
+        const messageList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         setMessages(messageList);
       } catch (error) {
@@ -57,7 +51,7 @@ export default function MessageList({ firestore, memberId }: MessageListProps) {
     };
 
     fetchMessages();
-  }, [firestore, memberId]);
+  }, [firestore, communityId, memberId]);
 
   return (
     <Card className="flex flex-col">
@@ -91,7 +85,7 @@ export default function MessageList({ firestore, memberId }: MessageListProps) {
                 </div>
             ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <p>No messages found for this member.</p>
+                    <p>No messages found for this member in this community.</p>
                 </div>
             )}
           </ScrollArea>

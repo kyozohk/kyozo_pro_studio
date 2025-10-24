@@ -27,6 +27,7 @@ export default function MemberList({ firestore, communityId, onSelectMember, sel
       setLoading(true);
       try {
         const usersRef = collection(firestore, 'users');
+        // As per the documentation, query users where the 'communities' array contains the communityId.
         const membersQuery = query(usersRef, where('communities', 'array-contains', communityId));
         
         const querySnapshot = await getDocs(membersQuery);

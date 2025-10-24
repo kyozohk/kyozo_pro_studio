@@ -77,6 +77,7 @@ export default function MigratePage() {
                 />
                 <MessageList 
                     firestore={oldFirestore}
+                    communityId={selectedCommunityId}
                     memberId={selectedMemberId}
                 />
             </div>
