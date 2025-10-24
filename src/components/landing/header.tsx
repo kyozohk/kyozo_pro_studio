@@ -1,19 +1,72 @@
+'use client';
+
 import Link from 'next/link';
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
+import { useUser } from '@/firebase';
+import { handleSignIn, handleSignOut } from '@/firebase/auth/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { LogOut, User } from 'lucide-react';
 
 export default function Header() {
+  const { user } = useUser();
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '';
+    const names = name.split(' ');
+    return names
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <Logo />
         <nav className="ml-auto flex items-center gap-2 sm:gap-4">
-          <Button variant="ghost" asChild className="hidden sm:flex">
-            <Link href="/moderation">Moderation Tool</Link>
-          </Button>
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            Login with Google
-          </Button>
+          {user && (
+             <Button variant="ghost" asChild className="hidden sm:flex">
+              <Link href="/moderation">Moderation Tool</Link>
+            </Button>
+          )}
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src={user.photoURL || undefined}
+                      alt={user.displayName || 'User'}
+                    />
+                    <AvatarFallback>
+                      {getInitials(user.displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={() => handleSignOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              onClick={handleSignIn}
+            >
+              Login with Google
+            </Button>
+          )}
         </nav>
       </div>
     </header>
