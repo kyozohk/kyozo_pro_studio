@@ -12,13 +12,15 @@ let firestore: Firestore;
 
 // This function is idempotent, so it can be called multiple times.
 function initializeFirebase() {
-  if (getApps().length === 0) {
-    firebaseApp = initializeApp(firebaseConfig);
-  } else {
-    firebaseApp = getApp();
+  if (typeof window !== 'undefined') {
+    if (getApps().length === 0) {
+      firebaseApp = initializeApp(firebaseConfig);
+    } else {
+      firebaseApp = getApp();
+    }
+    auth = getAuth(firebaseApp);
+    firestore = getFirestore(firebaseApp);
   }
-  auth = getAuth(firebaseApp);
-  firestore = getFirestore(firebaseApp);
   return { firebaseApp, auth, firestore };
 }
 
