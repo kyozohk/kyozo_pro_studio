@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { collection, query, where, getDocs, orderBy, type DocumentData, type Firestore } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, type DocumentData, type Firestore, or } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Loader2, MessageSquare, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,10 +30,16 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
       try {
         const messagesRef = collection(firestore, 'messages');
         
+        // As per the schema, we need to find messages where the selected member is either the sender or part of the recipients.
+        // The old schema might use a simple `recipientId` for 1-on-1 or `recipients` array for group.
+        // We will query for messages where the member is either the sender or the recipient.
         const messagesQuery = query(
             messagesRef, 
-            where('community', '==', communityId), 
-            where('readBy', 'array-contains', { userId: memberId }),
+            where('community', '==', communityId),
+            or(
+              where('sender', '==', memberId),
+              where('recipientId', '==', memberId) // Assuming recipientId exists for direct messages
+            ),
             orderBy('createdAt', 'desc')
         );
 
@@ -44,7 +50,23 @@ export default function MessageList({ firestore, communityId, memberId }: Messag
         setMessages(messageList);
       } catch (error) {
         console.error("Error fetching messages:", error);
-        setMessages([]);
+        // Fallback or secondary query if the first fails.
+        // This might happen if 'recipientId' doesn't exist. Let's try with 'readBy' as a fallback.
+        try {
+            const fallbackQuery = query(
+                collection(firestore, 'messages'),
+                where('community', '==', communityId),
+                where('readBy', 'array-contains', { userId: memberId }),
+                orderBy('createdAt', 'desc')
+            );
+            const fallbackSnapshot = await getDocs(fallbackQuery);
+            const fallbackMessageList = fallbackSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setMessages(fallbackMessageList);
+
+        } catch (fallbackError) {
+             console.error("Fallback query for messages also failed:", fallbackError);
+             setMessages([]);
+        }
       } finally {
         setLoading(false);
       }
