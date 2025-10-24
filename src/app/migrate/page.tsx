@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
 import { LogOut, Home, Users, Settings, Database } from 'lucide-react';
+import ExportPreviewDialog from './export-preview-dialog';
 
 let oldApp: FirebaseApp;
 if (!getApps().some(app => app.name === 'oldDB')) {
@@ -54,6 +55,10 @@ export default function MigratePage() {
   const [selectedCommunity, setSelectedCommunity] = useState<DocumentData | null>(null);
   const [selectedMember, setSelectedMember] = useState<DocumentData | null>(null);
   const [communityMembers, setCommunityMembers] = useState<DocumentData[]>([]);
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<object | null>(null);
+
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -75,6 +80,18 @@ export default function MigratePage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a community to export.' });
         return;
     }
+    const dataToExport = {
+      community: selectedCommunity,
+      members: communityMembers
+    }
+    setPreviewData(dataToExport);
+    setIsPreviewOpen(true);
+  };
+
+  const confirmExport = () => {
+    if (!selectedCommunity) return;
+    setIsPreviewOpen(false);
+
     startTransition(async () => {
         const result = await exportCommunity(selectedCommunity, communityMembers);
         if (result.success) {
@@ -83,7 +100,7 @@ export default function MigratePage() {
             toast({ variant: 'destructive', title: 'Export Failed', description: result.message });
         }
     });
-  };
+  }
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return '';
@@ -217,6 +234,13 @@ export default function MigratePage() {
               </div>
           </div>
       </main>
+      <ExportPreviewDialog 
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        data={previewData}
+        onConfirm={confirmExport}
+        isPending={isPending}
+      />
       </SidebarInset>
     </SidebarProvider>
   );
