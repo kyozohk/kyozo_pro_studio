@@ -9,7 +9,7 @@ interface SlidingCardItemProps {
   subtitle?: string;
   text: string;
   buttonText: string;
-  color: 'blue' | 'green' | 'purple' | 'rose';
+  color?: 'blue' | 'green' | 'purple' | 'rose' | 'gray';
   content?: React.ReactNode;
 }
 
@@ -18,7 +18,7 @@ const SlidingCardItem: React.FC<SlidingCardItemProps> = ({
   subtitle,
   text, 
   buttonText,
-  color,
+  color = 'gray',
   content,
 }) => {
   return (

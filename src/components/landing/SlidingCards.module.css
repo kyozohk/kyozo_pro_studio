@@ -50,6 +50,20 @@
   background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
 }
 
+.card.gray {
+  background-color: hsl(var(--muted));
+}
+
+.card.gray .cardTitle,
+.card.gray .cardSubtitle,
+.card.gray .cardText {
+  color: hsl(var(--muted-foreground));
+}
+
+.card.gray .cardTitle {
+    color: hsl(var(--foreground));
+}
+
 
 .cardContent {
   text-align: center;
