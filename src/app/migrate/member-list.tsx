@@ -228,11 +228,11 @@ export default function MemberList({
                             const role = member.role || 'Member';
                             const status = member.status || 'active';
                             return (
-                                <button
+                                <div
                                     key={member.id}
                                     onClick={() => onSelectMember(member)}
                                     className={cn(
-                                        "p-4 rounded-lg text-left transition-all",
+                                        "p-4 rounded-lg text-left transition-all cursor-pointer",
                                         "bg-card/50 hover:bg-muted/40",
                                         selectedMemberId === member.id && "bg-primary/10 ring-2 ring-primary"
                                     )}
@@ -253,15 +253,15 @@ export default function MemberList({
                                     {showActions && (
                                         <div className="flex justify-end items-center gap-2 text-muted-foreground pt-3 border-t border-muted/20">
                                             <TooltipProvider>
-                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><Edit size={16} /></button></TooltipTrigger><TooltipContent><p>Edit</p></TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><MessageSquare size={16} /></button></TooltipTrigger><TooltipContent><p>Message</p></TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><Phone size={16} /></button></TooltipTrigger><TooltipContent><p>Call</p></TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-foreground"><Mail size={16} /></button></TooltipTrigger><TooltipContent><p>Email</p></TooltipContent></Tooltip>
-                                                <Tooltip><TooltipTrigger asChild><button className="hover:text-destructive"><Trash2 size={16} /></button></TooltipTrigger><TooltipContent><p>Delete</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Edit size={16} /></Button></TooltipTrigger><TooltipContent><p>Edit</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><MessageSquare size={16} /></Button></TooltipTrigger><TooltipContent><p>Message</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Phone size={16} /></Button></TooltipTrigger><TooltipContent><p>Call</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Mail size={16} /></Button></TooltipTrigger><TooltipContent><p>Email</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive"><Trash2 size={16} /></Button></TooltipTrigger><TooltipContent><p>Delete</p></TooltipContent></Tooltip>
                                             </TooltipProvider>
                                         </div>
                                     )}
-                                </button>
+                                </div>
                             )
                         })}
                     </div>
