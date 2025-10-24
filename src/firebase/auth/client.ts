@@ -5,22 +5,27 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
 } from 'firebase/auth';
+import type {Auth} from 'firebase/auth';
+import { firebaseConfig } from '../config';
+import type { SignUpInput, SignInInput } from '@/lib/types';
 
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({
-  prompt: 'select_account',
-});
 
-// Set the branding for the sign-in pop-up
-provider.setCustomParameters({
-  'login_hint': 'user@example.com',
-  'hd': 'example.com', // Optionally, restrict to a G Suite domain
-});
+const getGoogleProvider = () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        prompt: 'select_account',
+    });
+    return provider;
+}
 
-export function handleSignIn() {
+
+export function handleGoogleSignIn() {
   const auth = getAuth();
-  auth.tenantId = firebaseConfig.authDomain;
+  const provider = getGoogleProvider();
   signInWithPopup(auth, provider)
     .then(result => {
       // This gives you a Google Access Token. You can use it to access the Google API.
@@ -47,13 +52,16 @@ export function handleSignOut() {
   signOut(auth);
 }
 
-// Helper to get the firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyALpnr-pNEyAQUgYBgVwfDIguJ_lu7_KQY",
-  authDomain: "kyozo-prod.firebaseapp.com",
-  projectId: "kyozo-prod",
-  storageBucket: "kyozo-prod.appspot.com",
-  messagingSenderId: "480316724826",
-  appId: "1:480316724826:web:152538c6412b7a97c23f13",
-  measurementId: "G-93V44B5N0G"
-};
+export async function handleSignUp(data: SignUpInput) {
+    const auth = getAuth();
+    const {name, email, password} = data;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
+    return userCredential;
+}
+
+export async function handleSignIn(data: SignInInput) {
+    const auth = getAuth();
+    const {email, password} = data;
+    return signInWithEmailAndPassword(auth, email, password);
+}
