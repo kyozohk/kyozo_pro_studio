@@ -3,7 +3,7 @@
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Database } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -81,6 +81,12 @@ export default function DashboardPage() {
               <SidebarMenuButton href="/moderation">
                 <Users />
                 Moderation
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/migrate">
+                <Database />
+                Migrate
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
