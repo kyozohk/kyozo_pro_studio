@@ -44,11 +44,12 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 
 export async function exportCommunity(communityData: any, members: any[]) {
     let adminApp: App;
+    const adminAppName = 'admin';
 
-    if (getApps().length === 0) {
-      adminApp = initializeApp();
+    if (getApps().some(app => app.name === adminAppName)) {
+      adminApp = getApp(adminAppName);
     } else {
-      adminApp = getApp();
+      adminApp = initializeApp({}, adminAppName);
     }
     const newDb = getFirestore(adminApp);
     
