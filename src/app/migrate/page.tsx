@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore, type Firestore, type DocumentData } from 'firebase/firestore';
 import { oldFirebaseConfig } from '@/firebase/old-config';
 import { Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
@@ -12,6 +12,7 @@ import Footer from '@/components/landing/footer';
 import CommunityList from './community-list';
 import MemberList from './member-list';
 import MessageList from './message-list';
+import CommunityDetails from './community-details';
 
 let oldApp: FirebaseApp;
 if (getApps().every(app => app.name !== 'oldDB')) {
@@ -24,7 +25,7 @@ const oldFirestore = getFirestore(oldApp);
 export default function MigratePage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
-  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+  const [selectedCommunity, setSelectedCommunity] = useState<DocumentData | null>(null);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,8 +34,8 @@ export default function MigratePage() {
     }
   }, [user, userLoading, router]);
 
-  const handleSelectCommunity = (communityId: string) => {
-    setSelectedCommunityId(communityId);
+  const handleSelectCommunity = (communityData: DocumentData) => {
+    setSelectedCommunity(communityData);
     setSelectedMemberId(null); // Reset member selection when community changes
   };
 
@@ -62,22 +63,26 @@ export default function MigratePage() {
                     Select a community to see its members, then select a member to see their messages from <code className="bg-muted px-2 py-1 rounded-md font-mono text-sm">kyozo-pro-webflow-fb6cc</code>.
                 </p>
             </div>
+
+            <div className="max-w-7xl mx-auto mb-4">
+              <CommunityDetails communityData={selectedCommunity} />
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[70vh] max-w-7xl mx-auto">
                 <CommunityList 
                     firestore={oldFirestore} 
                     onSelectCommunity={handleSelectCommunity} 
-                    selectedCommunityId={selectedCommunityId}
+                    selectedCommunityId={selectedCommunity?.id || null}
                 />
                 <MemberList 
                     firestore={oldFirestore}
-                    communityId={selectedCommunityId}
+                    communityId={selectedCommunity?.id || null}
                     onSelectMember={handleSelectMember}
                     selectedMemberId={selectedMemberId}
                 />
                 <MessageList 
                     firestore={oldFirestore}
-                    communityId={selectedCommunityId}
+                    communityId={selectedCommunity?.id || null}
                     memberId={selectedMemberId}
                 />
             </div>

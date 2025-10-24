@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 interface CommunityListProps {
   firestore: Firestore;
-  onSelectCommunity: (id: string) => void;
+  onSelectCommunity: (data: DocumentData) => void;
   selectedCommunityId: string | null;
 }
 
@@ -51,7 +51,7 @@ export default function CommunityList({ firestore, onSelectCommunity, selectedCo
                         "w-full text-left p-2 rounded-md hover:bg-muted transition-colors",
                         selectedCommunityId === community.id && "bg-primary text-primary-foreground hover:bg-primary/90"
                     )}
-                    onClick={() => onSelectCommunity(community.id)}
+                    onClick={() => onSelectCommunity(community)}
                   >
                     <p className="font-semibold truncate">{community.name || 'Unnamed Community'}</p>
                     <p className="text-xs text-muted-foreground truncate">{community.id}</p>
