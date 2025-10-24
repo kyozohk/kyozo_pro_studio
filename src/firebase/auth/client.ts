@@ -57,9 +57,10 @@ export function handleSignOut() {
 
 export async function handleSignUp(data: SignUpInput) {
     const auth = getAuth();
-    const {name, email, password} = data;
+    const {firstName, lastName, email, password} = data;
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: name });
+    const displayName = `${firstName} ${lastName}`;
+    await updateProfile(userCredential.user, { displayName });
     return userCredential;
 }
 

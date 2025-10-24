@@ -22,7 +22,8 @@ export default function SignUpForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [nameFocused, setNameFocused] = useState(false);
+  const [firstNameFocused, setFirstNameFocused] = useState(false);
+  const [lastNameFocused, setLastNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
@@ -30,7 +31,8 @@ export default function SignUpForm() {
   const form = useForm<SignUpInput>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -60,22 +62,41 @@ export default function SignUpForm() {
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
-      <div className="relative input-container flex items-center">
-        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-        <Input
-          id="name"
-          placeholder=" "
-          {...form.register('name')}
-          onFocus={() => setNameFocused(true)}
-          onBlur={() => setNameFocused(false)}
-          className={cn(
-              'peer pl-10', 
-              form.formState.errors.name ? 'border-destructive' : 'border-input',
-              nameFocused && 'gradient-border'
-            )}
-        />
-        <Label htmlFor="name">Your Name</Label>
-        {form.formState.errors.name && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.name.message}</p>}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="relative input-container flex items-center">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            id="firstName"
+            placeholder=" "
+            {...form.register('firstName')}
+            onFocus={() => setFirstNameFocused(true)}
+            onBlur={() => setFirstNameFocused(false)}
+            className={cn(
+                'peer pl-10', 
+                form.formState.errors.firstName ? 'border-destructive' : 'border-input',
+                firstNameFocused && 'gradient-border'
+              )}
+          />
+          <Label htmlFor="firstName">First Name</Label>
+          {form.formState.errors.firstName && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.firstName.message}</p>}
+        </div>
+        <div className="relative input-container flex items-center">
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            id="lastName"
+            placeholder=" "
+            {...form.register('lastName')}
+            onFocus={() => setLastNameFocused(true)}
+            onBlur={() => setLastNameFocused(false)}
+            className={cn(
+                'peer pl-10', 
+                form.formState.errors.lastName ? 'border-destructive' : 'border-input',
+                lastNameFocused && 'gradient-border'
+              )}
+          />
+          <Label htmlFor="lastName">Last Name</Label>
+          {form.formState.errors.lastName && <p className="text-xs text-destructive mt-1 absolute -bottom-5">{form.formState.errors.lastName.message}</p>}
+        </div>
       </div>
 
       <div className="relative input-container flex items-center">
