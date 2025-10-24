@@ -46,8 +46,29 @@ export default function MigratePage() {
 
         // IMPORTANT: Firestore's web SDK does not support listing collections directly.
         // In a real-world migration, you would need to know the names of the collections you want to migrate.
-        // We are using a predefined list here for demonstration purposes.
-        const collectionsToInspect = ['members', 'communities', 'events']; 
+        // We are using the list provided by the user for demonstration purposes.
+        const collectionsToInspect = [
+            'broadcasts', 
+            'categories', 
+            'channels', 
+            'communities', 
+            'importhistories', 
+            'linktrackers', 
+            'messages', 
+            'otphistories', 
+            'participations', 
+            'paymenthistories', 
+            'payments', 
+            'paymenttransactions', 
+            'phonecodes', 
+            'sendwamessagehistories', 
+            'stripewebhooks', 
+            'thirdpartyproviders', 
+            'threesixtywebhookhistories', d
+            'tokens', 
+            'users', 
+            'webhookevents'
+        ]; 
         
         const schemaData: Schema = {};
 
@@ -100,7 +121,7 @@ export default function MigratePage() {
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Firestore SDK Limitation</AlertTitle>
               <AlertDescription>
-                The Firestore web SDK cannot automatically list all collections. The collections below are common examples. To inspect other collections, you would need to manually add their names to the `collectionsToInspect` array in the code.
+                The Firestore web SDK cannot automatically list all collections. The collections below are based on the list you provided.
               </AlertDescription>
             </Alert>
             
