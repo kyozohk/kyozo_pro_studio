@@ -5,7 +5,7 @@ import { FirebaseProvider } from './provider';
 
 // This component is responsible for initializing Firebase on the client side.
 // It should be used as a wrapper around the root layout of your application.
-export function FirebaseClientProvider({
+export default function FirebaseClientProvider({
   children,
 }: {
   children: React.ReactNode;
