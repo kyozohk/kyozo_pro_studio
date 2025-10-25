@@ -26,7 +26,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarFooter,
-  SidebarInput,
   SidebarSeparator,
   SidebarUserProfile,
 } from '@/components/ui/sidebar';
@@ -82,9 +81,6 @@ export default function ModerationPage() {
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <div className="p-2">
-            <SidebarInput icon={<Search />} placeholder="Search..." />
-          </div>
           <SidebarMenu className="p-2">
             <SidebarMenuItem>
               <SidebarMenuButton href="/dashboard" icon={<Home />}>
@@ -124,16 +120,14 @@ export default function ModerationPage() {
                   <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                 </Avatar>
               }
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10"
-                onClick={() => handleSignOut()}
-              >
-                <LogOut />
-              </Button>
-            </SidebarUserProfile>
+            />
+            <SidebarMenu className="p-2">
+                <SidebarMenuItem>
+                    <SidebarMenuButton href="#" icon={<LogOut />} onClick={() => handleSignOut()}>
+                        Sign Out
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

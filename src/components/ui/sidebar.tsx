@@ -351,19 +351,19 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-[[data-state=collapsed]]/sidebar-wrapper:justify-center group-[[data-state=collapsed]]/sidebar-wrapper:p-2 group-[[data-state=collapsed]]/sidebar-wrapper:h-10 group-[[data-state=collapsed]]/sidebar-wrapper:w-10",
-  {
-    variants: {
-      isActive: {
-        true: "text-sidebar-primary-foreground bg-sidebar-primary hover:bg-sidebar-primary/90",
-        false: "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+    "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-[[data-state=collapsed]]/sidebar-wrapper:justify-center group-[[data-state=collapsed]]/sidebar-wrapper:p-2 group-[[data-state=collapsed]]/sidebar-wrapper:h-10 group-[[data-state=collapsed]]/sidebar-wrapper:w-10",
+    {
+      variants: {
+        isActive: {
+          true: "text-sidebar-primary-foreground",
+          false: "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+        },
       },
-    },
-    defaultVariants: {
-      isActive: false,
-    },
-  }
-);
+      defaultVariants: {
+        isActive: false,
+      },
+    }
+  );
 
 const SidebarMenuButton = React.forwardRef<
   HTMLAnchorElement,
@@ -389,11 +389,14 @@ const SidebarMenuButton = React.forwardRef<
             className: cn(
               "h-5 w-5 shrink-0",
                isActive
-                ? "text-sidebar-primary-foreground"
-                : "text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-accent-foreground",
+                ? "text-sidebar-primary"
+                : "text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-primary",
             )
           })}
-        <span className="group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0">
+        <span className={cn(
+            "group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0",
+            isActive && "text-sidebar-foreground"
+        )}>
           {children}
         </span>
         {badge && (
