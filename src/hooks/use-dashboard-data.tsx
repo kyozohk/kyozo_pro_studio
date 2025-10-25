@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useCallback } from 'react';
 
 // As per the schema, this represents the structure of a community document.
@@ -35,16 +36,16 @@ export function useDashboardData() {
     try {
       // It's possible the user doc doesn't exist yet for a new user
       const userDocRef = doc(firestore, 'users', user.uid);
-      const userDocSnap = await getDocs(query(collection(firestore, 'users'), where('userId', '==', user.uid)));
+      const userDocSnap = await getDoc(userDocRef);
 
 
-      if (userDocSnap.empty) {
+      if (!userDocSnap.exists()) {
         setData({ communities: [] });
         setLoading(false);
         return;
       }
 
-      const userData = userDocSnap.docs[0].data() as UserDoc;
+      const userData = userDocSnap.data() as UserDoc;
       const tenantIds = userData.tenants || [];
 
       if (tenantIds.length === 0) {
