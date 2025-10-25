@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState, useTransition } from 'react';
-import { handleSignUp } from '@/firebase/auth/client';
+import { useAuth } from '@/firebase/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff, Mail, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ export default function SignUpForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { signUp, authError } = useAuth();
 
   const [firstNameFocused, setFirstNameFocused] = useState(false);
   const [lastNameFocused, setLastNameFocused] = useState(false);
@@ -41,21 +41,16 @@ export default function SignUpForm() {
   });
 
   const onSubmit = (data: SignUpInput) => {
-    setError(null);
     startTransition(async () => {
       try {
-        await handleSignUp(data);
+        await signUp(data);
         toast({
           title: 'Account Created',
           description: "You're all set! Welcome to Kyozo.",
         });
         router.push('/dashboard');
       } catch (e: any) {
-        if (e.code === 'auth/email-already-in-use') {
-          setError("An account with this email already exists.");
-        } else {
-            setError("An unexpected error occurred. Please try again.");
-        }
+        // Error is handled by useAuth hook and displayed
       }
     });
   };
@@ -181,7 +176,7 @@ export default function SignUpForm() {
       </div>
       {form.formState.errors.agree && <p className="text-xs text-destructive -mt-2 ml-1">{form.formState.errors.agree.message}</p>}
       
-      {error && <p className="text-sm text-destructive text-center">{error}</p>}
+      {authError && <p className="text-sm text-destructive text-center">{authError}</p>}
 
       <div className="space-y-3 pt-3">
         <Button type="submit" className="w-full font-bold uppercase" disabled={isPending}>

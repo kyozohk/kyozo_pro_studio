@@ -21,7 +21,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (data: SignInInput) => Promise<void>;
   signUp: (data: SignUpInput) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: (callback?: () => void) => Promise<void>;
   signOut: () => Promise<void>;
   authError: string | null;
 };
@@ -54,10 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (callback?: () => void) => {
     setAuthError(null);
     try {
       await signInWithPopup(auth, googleProvider);
+      if (callback) callback();
     } catch (error) {
       const authError = error as AuthError;
       console.error("Error signing in with Google:", authError);

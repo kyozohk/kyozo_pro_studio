@@ -8,8 +8,8 @@ import { Separator } from '../ui/separator';
 import SignUpForm from './sign-up-form';
 import SignInForm from './sign-in-form';
 import { useState } from 'react';
-import { handleGoogleSignIn } from '@/firebase/auth/client';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/firebase/auth-provider';
 
 type AuthDialogProps = {
   open: boolean;
@@ -19,10 +19,20 @@ type AuthDialogProps = {
 export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [isSigningIn, setIsSigningIn] = useState(true);
   const router = useRouter();
+  const { signInWithGoogle } = useAuth();
 
   const onSignInSuccess = () => {
     onOpenChange(false);
     router.push('/dashboard');
+  };
+
+  const handleGoogleClick = async () => {
+    try {
+      await signInWithGoogle(onSignInSuccess);
+    } catch (error) {
+      console.error("Google sign in failed", error);
+      // Toast or error message can be handled here
+    }
   };
 
   return (
@@ -49,7 +59,7 @@ export default function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   <span className="text-xs text-muted-foreground">OR</span>
                   <Separator className="flex-1" />
               </div>
-              <Button variant="outline" className="w-full" onClick={() => handleGoogleSignIn(onSignInSuccess)}>
+              <Button variant="outline" className="w-full" onClick={handleGoogleClick}>
                 <GoogleIcon className="mr-2" />
                 Continue with Google
               </Button>

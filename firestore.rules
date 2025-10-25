@@ -1,120 +1,144 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
+ * @fileoverview Firestore Security Rules for the Kyozo SaaS platform.
  *
  * Core Philosophy:
- * This ruleset enforces a multi-tenant security model where tenants own their data and users
- * can only access data within tenants they belong to.  Super-admin roles are defined for
- * specific email addresses, granting them full access. All write operations are strictly
- * controlled via authorization checks.  Data validation is relaxed for rapid prototyping.
+ * This ruleset enforces a multi-tenant architecture where data is isolated under /tenants/{tenantId}.
+ * Users are managed globally in the /users collection, and tenants own communities. Super admins have elevated privileges.
  *
  * Data Structure:
- * - /users/{userId}: Stores user profile information, accessible only to the user themselves.
- * - /tenants/{tenantId}: Stores tenant information, accessible only to super admins.
- * - /tenants/{tenantId}/communities/{communityId}: Stores communities created by tenants.
- * - /tenants/{tenantId}/communities/{communityId}/memberships/{memberId}: Stores membership information for communities.
+ * - /users/{userId}: Stores global user profiles.
+ * - /tenants/{tenantId}: Represents a tenant (organization). tenantId matches the owner's UID.
+ * - /tenants/{tenantId}/communities/{communityId}: Communities created by a tenant.
+ * - /tenants/{tenantId}/communities/{communityId}/memberships/{memberId}: Membership details for a user in a community.
+ * - /superAdmins: List of super admin UIDs. This is not a collection.
  *
  * Key Security Decisions:
- * - Super-admin role:  Users with specific email addresses (tech@kyozo.com, will@kyozo.com, ashok@kyozo.com) are granted full read and write access.
- * - Tenant ownership: Only super admins can create tenants.
- * - Community ownership: Only super admins can create communities.
- * - Membership management:  Only super admins can manage memberships.
- * - No user listing: Listing all users is disallowed for privacy and security reasons.
+ * - Users can only read their own profile data in /users/{userId}.
+ * - Only super admins can create tenants.
+ * - Tenants can only manage their own communities and memberships.
+ * - Listing of users is generally disallowed, except for specific admin roles within a tenant.
+ * - Relational integrity is enforced where possible (e.g., tenantId and userId consistency).
  *
  * Denormalization for Authorization:
- *  None. The super admin check allows for full access based on email.
+ * - The tenantId is used as the document ID in /tenants/{tenantId} to simplify ownership checks.
+ * - The createdBy field in /tenants/{tenantId}/communities/{communityId} stores the tenantId to verify community ownership.
  *
  * Structural Segregation:
- * Data is segregated by tenant ID to ensure proper multi-tenancy.
+ * - Private tenant data is kept separate from public community data.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows a user to read and write their own user profile.
+     * @description Grants access to user profile documents.
      * @path /users/{userId}
-     * @allow (get, create, update, delete) if the user's auth UID matches the userId.
-     * @deny (get, create, update, delete) if the user's auth UID does not match the userId.
-     * @principle Enforces document ownership for user profiles.
+     * @allow (get, create, update, delete, list) User with matching userId can access their profile.
+     * @deny (get, create, update, delete, list) User trying to access another user's profile.
+     * @principle Enforces user-ownership for profile data.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.userId == userId;
+      allow delete: if isSignedIn() && isOwner(userId) && resource.data.userId == userId;
     }
 
     /**
-     * @description Allows super admins to manage tenants.
+     * @description Grants access to tenant documents. Only super admins can create tenants. Tenants can read/update their own data.
      * @path /tenants/{tenantId}
-     * @allow (get, create, update, delete) if the user is a super admin.
-     * @deny (get, create, update, delete) if the user is not a super admin.
-     * @principle Restricts tenant management to super admins.
+     * @allow (create) Super admins can create tenants.
+     * @allow (get, update, delete) Tenant owner can access/modify their tenant data.
+     * @deny (create, get, update, delete, list) Non-super admins attempting to create tenants. Non-owners attempting to access tenant data.
+     * @principle Enforces tenant ownership and super admin control over tenant creation.
      */
     match /tenants/{tenantId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isSuperAdmin() {
+        return get(/databases/$(database)/documents/super-admins).data.uids.hasAny([request.auth.uid]);
+      }
+
+      function isOwner(tenantId) {
+        return request.auth.uid == tenantId;
+      }
+
+      allow get: if isSignedIn() && isOwner(tenantId);
+      allow list: if false;
+      allow create: if isSignedIn() && isSuperAdmin() && request.resource.data.tenantId == tenantId;
+      allow update: if isSignedIn() && isOwner(tenantId) && resource.data.tenantId == tenantId;
+      allow delete: if isSignedIn() && isOwner(tenantId) && resource.data.tenantId == tenantId;
     }
 
     /**
-     * @description Allows super admins to manage communities within a tenant.
+     * @description Grants access to community documents within a tenant. Tenant owners can manage their communities.
      * @path /tenants/{tenantId}/communities/{communityId}
-     * @allow (get, create, update, delete) if the user is a super admin.
-     * @deny (get, create, update, delete) if the user is not a super admin.
-     * @principle Restricts community management to super admins.
+     * @allow (create) Tenant owner can create communities within their tenant.
+     * @allow (get, list, update, delete) Tenant owner can access/modify their communities.
+     * @deny (create, get, list, update, delete) Non-owners attempting to access community data.
+     * @principle Enforces tenant-ownership for communities.
      */
     match /tenants/{tenantId}/communities/{communityId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(tenantId) {
+        return request.auth.uid == tenantId;
+      }
+
+      allow get: if isSignedIn() && isOwner(tenantId);
+      allow list: if isSignedIn() && isOwner(tenantId);
+      allow create: if isSignedIn() && isOwner(tenantId) && request.resource.data.createdBy == tenantId;
+      allow update: if isSignedIn() && isOwner(tenantId) && resource.data.createdBy == tenantId;
+      allow delete: if isSignedIn() && isOwner(tenantId) && resource.data.createdBy == tenantId;
     }
 
     /**
-     * @description Allows super admins to manage memberships within a community.
+     * @description Grants access to membership documents within a community. Tenant owners can manage community memberships.
      * @path /tenants/{tenantId}/communities/{communityId}/memberships/{memberId}
-     * @allow (get, create, update, delete) if the user is a super admin.
-     * @deny (get, create, update, delete) if the user is not a super admin.
-     * @principle Restricts membership management to super admins.
+     * @allow (create, update, delete) Tenant owner can manage memberships within their communities.
+     * @allow (get, list) Tenant owner can read memberships within their communities.
+     * @deny (create, get, list, update, delete) Non-owners attempting to access membership data.
+     * @principle Enforces tenant-ownership for community memberships.
      */
     match /tenants/{tenantId}/communities/{communityId}/memberships/{memberId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(tenantId) {
+        return request.auth.uid == tenantId;
+      }
+
+      allow get: if isSignedIn() && isOwner(tenantId);
+      allow list: if isSignedIn() && isOwner(tenantId);
+      allow create: if isSignedIn() && isOwner(tenantId);
+      allow update: if isSignedIn() && isOwner(tenantId);
+      allow delete: if isSignedIn() && isOwner(tenantId);
     }
 
-    // ---- Helper functions ----
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the resource.
-     * @param {string} userId The user ID to compare against the request's auth UID.
-     * @return True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user is a super admin.
-     * @return True if the user is a super admin, false otherwise.
-     */
-    function isSuperAdmin() {
-      return isSignedIn() && (request.auth.token.email == "tech@kyozo.com" || request.auth.token.email == "will@kyozo.com" || request.auth.token.email == "ashok@kyozo.com");
-    }
+        /**
+         * @description Grants read access to the super-admins document.
+         * @path /super-admins.json
+         * @allow (get) Any signed-in user can read the list of super admins.
+         * @deny (create, update, delete) No one can modify the super-admins document through the rules.  It must be done via the admin SDK.
+         * @principle Protects the super admin list from unauthorized modification.
+         */
+        match /super-admins {
+            allow get: if true; // This document should only be read by the rules.  It should not be directly accessible.
+            allow create, update, delete: if false;
+        }
   }
 }

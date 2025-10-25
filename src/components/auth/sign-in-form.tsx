@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useTransition } from "react";
-import { handleSignIn } from "@/firebase/auth/client";
+import { useAuth } from "@/firebase/auth-provider";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,12 +15,12 @@ import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
     const [isPending, startTransition] = useTransition();
-    const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const { signIn, authError } = useAuth();
   
     const form = useForm<SignInInput>({
       resolver: zodResolver(signInSchema),
@@ -31,26 +31,16 @@ export default function SignInForm() {
     });
   
     const onSubmit = (data: SignInInput) => {
-        setError(null);
         startTransition(async () => {
             try {
-                await handleSignIn(data);
+                await signIn(data);
                 toast({
                     title: "Signed In",
                     description: "You have been successfully signed in.",
                 });
                 router.push('/dashboard');
             } catch (e: any) {
-                switch (e.code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                    case 'auth/invalid-credential':
-                        setError("Invalid email or password.");
-                        break;
-                    default:
-                        setError("An unexpected error occurred. Please try again.");
-                        break;
-                }
+              // error is handled by useAuth hook and displayed
             }
         });
     };
@@ -102,7 +92,7 @@ export default function SignInForm() {
 
         <a href="#" className="block text-right text-sm text-primary hover:underline">Forgot Password?</a>
         
-        {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        {authError && <p className="text-sm text-destructive text-center">{authError}</p>}
   
         <Button type="submit" className="w-full font-bold uppercase" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
