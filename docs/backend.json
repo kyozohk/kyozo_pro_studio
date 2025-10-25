@@ -124,6 +124,19 @@
         }
       },
       "required": ["memberId", "role", "status"]
+    },
+    "SuperAdmins": {
+      "title": "Super Admins",
+      "description": "A list of user UIDs that have super admin privileges.",
+      "type": "object",
+      "properties": {
+        "uids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "auth": {
@@ -156,6 +169,12 @@
         "$ref": "#/entities/Membership"
       },
       "description": "Subcollection tracking members and their roles within a specific community."
+    },
+    "/super-admins.json": {
+        "schema": {
+            "$ref": "#/entities/SuperAdmins"
+        },
+        "description": "A file used by Firestore rules to grant super admin privileges. This is not a collection."
     }
   }
 }
