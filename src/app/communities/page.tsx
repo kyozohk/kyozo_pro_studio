@@ -16,7 +16,6 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,10 +27,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
 import { LogOut, Home, Users } from 'lucide-react';
-import DashboardWelcome from '@/components/dashboard/welcome';
 import CommunityList from '@/components/dashboard/community-list';
 
-export default function DashboardPage() {
+export default function CommunitiesPage() {
   const { user, loading } = useUser();
   const router = useRouter();
 
@@ -73,13 +71,13 @@ export default function DashboardPage() {
         <SidebarContent className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" isActive>
+              <SidebarMenuButton href="/dashboard">
                 <Home />
                 <span>Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="/communities">
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/communities" isActive>
                 <LayoutGrid />
                 <span>Communities</span>
               </SidebarMenuButton>
@@ -144,7 +142,6 @@ export default function DashboardPage() {
           </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">
-          <DashboardWelcome />
           <CommunityList />
         </main>
       </SidebarInset>

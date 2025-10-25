@@ -4,7 +4,7 @@ import ModerationTool from '@/components/moderation-tool';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, Home, Users, Settings, Database, LogOut } from 'lucide-react';
+import { Loader2, Home, Users, Settings, Database, LogOut, LayoutGrid } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -74,6 +74,12 @@ export default function ModerationPage() {
               <SidebarMenuButton href="/dashboard">
                 <Home />
                 <span>Dashboard</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton href="/communities">
+                <LayoutGrid />
+                <span>Communities</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

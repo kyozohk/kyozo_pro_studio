@@ -33,7 +33,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
-import { LogOut, Home, Users, Settings, Database } from 'lucide-react';
+import { LogOut, Home, Users, Settings, Database, LayoutGrid } from 'lucide-react';
+import ExportPreviewDialog from './export-preview-dialog';
+import { exportCommunity } from '@/app/actions';
 
 let oldApp: FirebaseApp;
 if (!getApps().some(app => app.name === 'oldDB')) {
@@ -47,10 +49,15 @@ export default function MigratePage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
 
   const [selectedCommunity, setSelectedCommunity] = useState<DocumentData | null>(null);
   const [selectedMember, setSelectedMember] = useState<DocumentData | null>(null);
   const [communityMembers, setCommunityMembers] = useState<DocumentData[]>([]);
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [exportData, setExportData] = useState<object | null>(null);
+
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -83,10 +90,51 @@ export default function MigratePage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a community to export.' });
         return;
     }
+    
+    // This is for JSON download
     downloadJson(selectedCommunity, `${selectedCommunity.id}-community.json`);
     downloadJson(communityMembers, `${selectedCommunity.id}-members.json`);
     toast({ title: 'Export Started', description: 'Your JSON files are being downloaded.' });
   };
+  
+  const handleExportToNewSchema = () => {
+    if (!selectedCommunity) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please select a community to export.' });
+      return;
+    }
+    const transformedCommunity = {
+      // Basic Info
+      communityId: selectedCommunity.id,
+      name: selectedCommunity.name,
+      description: selectedCommunity.lore,
+      profile: {
+        logoUrl: selectedCommunity.communityProfileImage,
+        bannerUrl: selectedCommunity.communityBackgroundImage,
+      },
+      visibility: selectedCommunity.communityPrivacy || 'private',
+      createdBy: selectedCommunity.owner, // tenantId will be owner
+      
+      // We will derive this on the new side, but for preview we can show it
+      memberCount: communityMembers.length,
+    };
+    
+    setExportData({ community: transformedCommunity, members: communityMembers });
+    setIsPreviewOpen(true);
+  }
+
+  const confirmExport = () => {
+    if (!exportData) return;
+
+    startTransition(async () => {
+        const result = await exportCommunity((exportData as any).community, (exportData as any).members);
+        if (result.success) {
+            toast({ title: 'Export Successful', description: result.message });
+        } else {
+            toast({ variant: 'destructive', title: 'Export Failed', description: result.message });
+        }
+        setIsPreviewOpen(false);
+    });
+  }
 
 
   const getInitials = (name: string | null | undefined) => {
@@ -108,6 +156,7 @@ export default function MigratePage() {
   }
 
   return (
+    <>
     <SidebarProvider>
     <Sidebar side="left" collapsible="icon">
       <SidebarHeader className="border-b">
@@ -126,6 +175,12 @@ export default function MigratePage() {
               <span>Dashboard</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
+           <SidebarMenuItem>
+              <SidebarMenuButton href="/communities">
+                <LayoutGrid />
+                <span>Communities</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton href="/moderation">
               <Users />
@@ -180,15 +235,19 @@ export default function MigratePage() {
     <SidebarInset>
       <main className="flex-1 p-4 sm:p-6">
           <div className="max-w-6xl mx-auto text-center mb-6">
-              <h1 className="font-headline text-4xl font-bold">Database Migration Exporter</h1>
+              <h1 className="font-headline text-4xl font-bold">Database Migration Tool</h1>
               <p className="mt-4 text-muted-foreground">
-                  Select a community to see its members, then export the data to JSON files. You can then import these files using the 'Add Community' dialog on the dashboard.
+                  Select a community to see its members, then export the data.
               </p>
           </div>
-          <div className="max-w-7xl mx-auto mb-6 text-center">
+          <div className="max-w-7xl mx-auto mb-6 text-center flex items-center justify-center gap-4">
                <Button onClick={handleExport} disabled={!selectedCommunity}>
                   <Download className="mr-2 h-4 w-4" />
                   Export to JSON
+              </Button>
+              <Button onClick={handleExportToNewSchema} disabled={!selectedCommunity}>
+                <Download className="mr-2 h-4 w-4" />
+                Export to New Schema
               </Button>
           </div>
           
@@ -219,5 +278,14 @@ export default function MigratePage() {
       </main>
       </SidebarInset>
     </SidebarProvider>
+
+    <ExportPreviewDialog 
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        data={exportData}
+        onConfirm={confirmExport}
+        isPending={isPending}
+    />
+    </>
   );
 }
