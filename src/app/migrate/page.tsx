@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore, type DocumentData } from 'firebase/firestore';
 import { oldFirebaseConfig } from '@/firebase/old-config';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, Home, Users, Settings, Database, LayoutGrid, Search, LogOut, ShieldCheck } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import CommunityList from './community-list';
@@ -23,6 +23,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarFooter,
+  SidebarInput,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +35,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
-import { LogOut, Home, Users, Settings, Database, LayoutGrid } from 'lucide-react';
 import ExportPreviewDialog from './export-preview-dialog';
 import { exportCommunity } from '@/app/actions';
 
@@ -158,124 +159,129 @@ export default function MigratePage() {
   return (
     <>
     <SidebarProvider>
-    <Sidebar side="left" collapsible="icon">
-      <SidebarHeader className="border-b">
-        <div className="flex h-14 items-center justify-between px-4">
+      <Sidebar side="left" collapsible="icon">
+        <SidebarHeader className="border-b">
+          <div className="flex h-14 items-center justify-between px-4">
             <div className="group-[[data-state=expanded]]/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0 transition-opacity duration-200">
-                <Logo />
+              <Logo />
             </div>
-          <SidebarTrigger className="ml-auto" />
-        </div>
-      </SidebarHeader>
-      <SidebarContent className="p-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="/dashboard" >
-              <Home />
-              <span>Dashboard</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-              <SidebarMenuButton href="/communities">
-                <LayoutGrid />
-                <span>Communities</span>
+            <SidebarTrigger />
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <div className="p-2">
+            <SidebarInput icon={<Search />} placeholder="Search..." />
+          </div>
+          <SidebarMenu className="p-2">
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/dashboard" icon={<Home />}>
+                Dashboard
               </SidebarMenuButton>
             </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="/moderation">
-              <Users />
-              <span>Moderation</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="/migrate" isActive>
-              <Database />
-              <span>Migrate</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-           <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Settings />
-                <span>Settings</span>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/communities" icon={<LayoutGrid />}>
+                Communities
               </SidebarMenuButton>
             </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter className="flex items-center gap-3 p-3">
-           <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative size-10 rounded-full"
-                >
-                  <Avatar className="size-10">
-                    <AvatarImage
-                      src={user.photoURL || undefined}
-                      alt={user.displayName || 'User'}
-                    />
-                    <AvatarFallback>
-                      {getInitials(user.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={() => handleSignOut()}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-             <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
-                <p className="text-sm font-semibold">{user.displayName}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/moderation" icon={<ShieldCheck />}>
+                Moderation
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/migrate" isActive icon={<Database />}>
+                Migrate
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="#" icon={<Settings />}>
+                Settings
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarSeparator />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex w-full items-center gap-3 p-3 text-left">
+                <Avatar className="size-9">
+                  <AvatarImage
+                    src={user.photoURL || undefined}
+                    alt={user.displayName || 'User'}
+                  />
+                  <AvatarFallback>
+                    {getInitials(user.displayName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
+                  <p className="text-sm font-semibold">{user.displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuItem onClick={() => handleSignOut()}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
-    </Sidebar>
-    <SidebarInset>
-      <main className="flex-1 p-4 sm:p-6">
-          <div className="max-w-6xl mx-auto text-center mb-6">
-              <h1 className="font-headline text-4xl font-bold">Database Migration Tool</h1>
-              <p className="mt-4 text-muted-foreground">
+      </Sidebar>
+      <SidebarInset>
+        <main className="flex flex-col flex-1 h-screen">
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+            <div className="flex-1">
+              <h1 className="font-headline text-xl font-bold">Database Migration Tool</h1>
+              <p className="text-sm text-muted-foreground">
                   Select a community to see its members, then export the data.
               </p>
-          </div>
-          <div className="max-w-7xl mx-auto mb-6 text-center flex items-center justify-center gap-4">
-               <Button onClick={handleExport} disabled={!selectedCommunity}>
+            </div>
+            <div className="flex items-center gap-4">
+                 <Button onClick={handleExport} disabled={!selectedCommunity} size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export to JSON
+                </Button>
+                <Button onClick={handleExportToNewSchema} disabled={!selectedCommunity} size="sm">
                   <Download className="mr-2 h-4 w-4" />
-                  Export to JSON
-              </Button>
-              <Button onClick={handleExportToNewSchema} disabled={!selectedCommunity}>
-                <Download className="mr-2 h-4 w-4" />
-                Export to New Schema
-              </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-[2fr,5fr] gap-8 max-w-7xl mx-auto">
-              <CommunityList 
-                  firestore={oldFirestore} 
-                  onSelectCommunity={handleSelectCommunity} 
-                  selectedCommunityId={selectedCommunity?.id || null}
-              />
-              <div className="flex flex-col gap-4">
-                <MemberList 
-                    firestore={oldFirestore}
-                    community={selectedCommunity}
-                    onSelectMember={handleSelectMember}
-                    selectedMemberId={selectedMember?.id || null}
-                    onMembersLoaded={setCommunityMembers}
-                    showEmail
-                    showJoiningDate
-                    showActions
-                />
-                <MemberDetails 
-                  firestore={oldFirestore}
-                  member={selectedMember}
-                  communityId={selectedCommunity?.id || null}
+                  Export to New Schema
+                </Button>
+            </div>
+          </header>
+          <div className="grid flex-1 grid-cols-1 md:grid-cols-[2fr,5fr] gap-4 p-4 overflow-hidden">
+              <div className="h-full overflow-y-auto">
+                <CommunityList 
+                    firestore={oldFirestore} 
+                    onSelectCommunity={handleSelectCommunity} 
+                    selectedCommunityId={selectedCommunity?.id || null}
                 />
               </div>
+              <div className="flex flex-col gap-4 overflow-hidden">
+                  <div className="h-1/2 overflow-y-auto">
+                    <MemberList 
+                        firestore={oldFirestore}
+                        community={selectedCommunity}
+                        onSelectMember={handleSelectMember}
+                        selectedMemberId={selectedMember?.id || null}
+                        onMembersLoaded={setCommunityMembers}
+                        showEmail
+                        showJoiningDate
+                        showActions
+                    />
+                  </div>
+                  <div className="h-1/2">
+                    <MemberDetails 
+                      firestore={oldFirestore}
+                      member={selectedMember}
+                      communityId={selectedCommunity?.id || null}
+                    />
+                  </div>
+              </div>
           </div>
-      </main>
+        </main>
       </SidebarInset>
     </SidebarProvider>
 

@@ -4,7 +4,17 @@ import ModerationTool from '@/components/moderation-tool';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Loader2, Home, Users, Settings, Database, LogOut, LayoutGrid } from 'lucide-react';
+import {
+  Loader2,
+  Home,
+  Users,
+  Settings,
+  Database,
+  LogOut,
+  LayoutGrid,
+  Search,
+  ShieldCheck,
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +26,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarFooter,
+  SidebarInput,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
@@ -65,82 +77,73 @@ export default function ModerationPage() {
             <div className="group-[[data-state=expanded]]/sidebar-wrapper:opacity-100 group-[[data-state=collapsed]]/sidebar-wrapper:opacity-0 transition-opacity duration-200">
               <Logo />
             </div>
-            <SidebarTrigger className="ml-auto" />
+            <SidebarTrigger />
           </div>
         </SidebarHeader>
-        <SidebarContent className="p-2">
-          <SidebarMenu>
+        <SidebarContent>
+          <div className="p-2">
+            <SidebarInput icon={<Search />} placeholder="Search..." />
+          </div>
+          <SidebarMenu className="p-2">
             <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard">
-                <Home />
-                <span>Dashboard</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="/communities">
-                <LayoutGrid />
-                <span>Communities</span>
+              <SidebarMenuButton href="/dashboard" icon={<Home />}>
+                Dashboard
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/moderation" isActive>
-                <Users />
-                <span>Moderation</span>
+              <SidebarMenuButton href="/communities" icon={<LayoutGrid />}>
+                Communities
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton href="/migrate">
-                <Database />
-                <span>Migrate</span>
+              <SidebarMenuButton href="/moderation" isActive icon={<ShieldCheck />}>
+                Moderation
               </SidebarMenuButton>
             </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Settings />
-                <span>Settings</span>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="/migrate" icon={<Database />}>
+                Migrate
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton href="#" icon={<Settings />}>
+                Settings
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="flex items-center gap-3 p-3">
-           <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative size-10 rounded-full"
-                >
-                  <Avatar className="size-10">
-                    <AvatarImage
-                      src={user.photoURL || undefined}
-                      alt={user.displayName || 'User'}
-                    />
-                    <AvatarFallback>
-                      {getInitials(user.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem onClick={() => handleSignOut()}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-             <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
-                <p className="text-sm font-semibold">{user.displayName}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
+        <SidebarFooter>
+          <SidebarSeparator />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex w-full items-center gap-3 p-3 text-left">
+                <Avatar className="size-9">
+                  <AvatarImage
+                    src={user.photoURL || undefined}
+                    alt={user.displayName || 'User'}
+                  />
+                  <AvatarFallback>
+                    {getInitials(user.displayName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
+                  <p className="text-sm font-semibold">{user.displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user.email}
+                  </p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuItem onClick={() => handleSignOut()}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
-          <div className="md:hidden">
-            <SidebarTrigger />
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-          </div>
-        </header>
         <main className="flex-1 p-4 sm:p-6">
             <div className="max-w-2xl mx-auto text-center mb-12">
                 <h1 className="font-headline text-4xl font-bold">Community Content Moderation</h1>
