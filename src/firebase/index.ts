@@ -4,6 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { firebaseConfig } from "./config";
 
+// Initialize Firebase
 let app;
 if (!getApps().length) {
     app = initializeApp(firebaseConfig);

@@ -13,12 +13,14 @@ import {
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import SignInForm from '@/components/auth/sign-in-form';
-import { exportCommunity } from '@/app/actions'; // Using the server action
+import { exportCommunity } from '@/app/actions';
+import { useRouter } from 'next/navigation';
 
 export default function TestPage() {
   const { user, loading: userLoading, signInWithGoogle, signOut } = useAuth();
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const router = useRouter();
   const [message, setMessage] = useState('');
 
   const handleCreateCommunity = async () => {
