@@ -32,12 +32,6 @@ import {
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
 import CommunityList from '@/components/dashboard/community-list';
 
@@ -113,34 +107,14 @@ export default function CommunitiesPage() {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <SidebarSeparator />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-3 p-3 text-left">
-                <Avatar className="size-9">
-                  <AvatarImage
-                    src={user.photoURL || undefined}
-                    alt={user.displayName || 'User'}
-                  />
-                  <AvatarFallback>
-                    {getInitials(user.displayName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
-                  <p className="text-sm font-semibold">{user.displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem onClick={() => handleSignOut()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+           <SidebarSeparator />
+           <SidebarMenu className="p-2">
+            <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => handleSignOut()} icon={<LogOut />}>
+                    Log Out
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

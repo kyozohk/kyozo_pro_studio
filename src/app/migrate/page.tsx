@@ -27,16 +27,9 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
 import ExportPreviewDialog from './export-preview-dialog';
-import { exportCommunity } from '@/app/actions';
+import { createCommunity } from '@/app/actions';
 
 let oldApp: FirebaseApp;
 if (!getApps().some(app => app.name === 'oldDB')) {
@@ -99,7 +92,7 @@ export default function MigratePage() {
   };
   
   const handleExportToNewSchema = () => {
-    if (!selectedCommunity) {
+    if (!selectedCommunity || !user) {
       toast({ variant: 'destructive', title: 'Error', description: 'Please select a community to export.' });
       return;
     }
@@ -113,7 +106,7 @@ export default function MigratePage() {
         bannerUrl: selectedCommunity.communityBackgroundImage,
       },
       visibility: selectedCommunity.communityPrivacy || 'private',
-      createdBy: selectedCommunity.owner, // tenantId will be owner
+      createdBy: user.uid, // tenantId will be owner
       
       // We will derive this on the new side, but for preview we can show it
       memberCount: communityMembers.length,
@@ -124,10 +117,10 @@ export default function MigratePage() {
   }
 
   const confirmExport = () => {
-    if (!exportData) return;
+    if (!exportData || !user) return;
 
     startTransition(async () => {
-        const result = await exportCommunity((exportData as any).community, (exportData as any).members);
+        const result = await createCommunity((exportData as any).community, user.uid);
         if (result.success) {
             toast({ title: 'Export Successful', description: result.message });
         } else {
@@ -201,34 +194,14 @@ export default function MigratePage() {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <SidebarSeparator />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-3 p-3 text-left">
-                <Avatar className="size-9">
-                  <AvatarImage
-                    src={user.photoURL || undefined}
-                    alt={user.displayName || 'User'}
-                  />
-                  <AvatarFallback>
-                    {getInitials(user.displayName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 overflow-hidden whitespace-nowrap group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
-                  <p className="text-sm font-semibold">{user.displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuItem onClick={() => handleSignOut()}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <SidebarSeparator />
+            <SidebarMenu className="p-2">
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => handleSignOut()} icon={<LogOut />}>
+                        Log Out
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

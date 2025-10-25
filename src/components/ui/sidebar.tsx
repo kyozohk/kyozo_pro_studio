@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { VariantProps, cva } from 'class-variance-authority';
-import { PanelLeft, Check } from 'lucide-react';
+import { PanelLeft } from 'lucide-react';
 import Link from 'next/link';
 
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -415,12 +415,12 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10",
+  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10",
   {
     variants: {
       isActive: {
         true: "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground",
-        false: "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        false: "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:hover:text-sidebar-accent-foreground",
       },
     },
     defaultVariants: {
@@ -432,11 +432,12 @@ const sidebarMenuButtonVariants = cva(
 
 const SidebarMenuButton = React.forwardRef<
   HTMLAnchorElement,
-  React.ComponentProps<typeof Link> & {
+  React.ComponentProps<typeof Link> & React.ComponentProps<typeof Button> & {
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
     icon?: React.ReactNode;
     badge?: React.ReactNode;
+    href?: string;
   }
 >(
   (
@@ -447,6 +448,7 @@ const SidebarMenuButton = React.forwardRef<
       children,
       icon,
       badge,
+      href,
       ...props
     },
     ref
@@ -455,22 +457,26 @@ const SidebarMenuButton = React.forwardRef<
     
     const content = (
       <>
-        {isActive && (
-           <div className="absolute left-1 group-data-[collapsible=collapsed]:left-1/2 group-data-[collapsible=collapsed]:-translate-x-1/2">
-             <Check size={16} />
-           </div>
-        )}
-        {icon && React.cloneElement(icon as React.ReactElement, { className: "h-5 w-5 shrink-0" })}
-        <span className="flex-1 truncate group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0">
+        {icon && React.cloneElement(icon as React.ReactElement, { 
+            className: cn(
+                "h-5 w-5 shrink-0",
+                isActive ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-accent-foreground"
+            ) 
+        })}
+        <span className={cn(
+            "flex-1 truncate group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0",
+             isActive ? "text-sidebar-primary-foreground" : "group-hover/menu-button:text-sidebar-accent-foreground"
+        )}>
           {children}
         </span>
         {badge && <div className="group-data-[collapsible=icon]:hidden">{badge}</div>}
       </>
     )
 
-    const button = (
+    const button = href ? (
       <Link
         ref={ref}
+        href={href}
         data-sidebar="menu-button"
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ isActive }), className)}
@@ -478,6 +484,16 @@ const SidebarMenuButton = React.forwardRef<
       >
         {content}
       </Link>
+    ) : (
+      <Button
+        ref={ref as any}
+        data-sidebar="menu-button"
+        data-active={isActive}
+        className={cn(sidebarMenuButtonVariants({ isActive }), className, 'w-full justify-start')}
+        {...props}
+      >
+        {content}
+      </Button>
     );
 
     if (!tooltip) {
