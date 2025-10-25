@@ -4,7 +4,7 @@ import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
 import { getApps, initializeApp, getApp, cert } from 'firebase-admin/app';
-import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin SDK
 if (!getApps().length) {
@@ -89,7 +89,7 @@ export async function exportCommunity(communityData: any, members: any[]) {
             // Update user's tenant list
             const userRef = adminFirestore.collection('users').doc(memberId);
              batch.update(userRef, {
-                tenants: getAdminFirestore.FieldValue.arrayUnion(tenantId)
+                tenants: FieldValue.arrayUnion(tenantId)
             });
         }
         
