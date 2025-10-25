@@ -24,7 +24,7 @@ const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
-const SIDEBAR_WIDTH_ICON = '3.5rem';
+const SIDEBAR_WIDTH_ICON = '4rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
 type SidebarContext = {
@@ -108,7 +108,7 @@ const SidebarProvider = React.forwardRef<
 
     const contextValue = React.useMemo(
       () => ({
-        state,
+        state: state as 'expanded' | 'collapsed',
         open,
         setOpen,
         isMobile,
@@ -180,14 +180,19 @@ const Sidebar = React.forwardRef<
     return (
       <div
         ref={ref}
-        className={cn('transition-all', state === 'expanded' ? 'w-[16rem]' : 'w-[3.5rem]', className)}
+        className={cn(
+          'transition-all', 
+          state === 'expanded' ? 'w-[16rem]' : 'w-[4rem]', 
+          state === 'expanded' ? '' : 'sidebar-collapsed',
+          className
+        )}
         {...props}
       >
         <div
           className={cn(
             'fixed h-full border-r bg-sidebar text-sidebar-foreground',
             side === 'right' && 'right-0 border-l',
-            state === 'expanded' ? 'w-[16rem]' : 'w-[3.5rem]',
+            state === 'expanded' ? 'w-[16rem]' : 'w-[4rem]',
             'transition-all flex flex-col'
           )}
         >
@@ -274,7 +279,7 @@ const SidebarHeader = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('flex h-[3.5rem] shrink-0 items-center', className)}
+      className={cn('flex h-16 shrink-0 items-center', className)}
       {...props}
     />
   );
@@ -288,7 +293,7 @@ const SidebarFooter = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('mt-auto flex shrink-0 flex-col', className)}
+      className={cn('mt-auto flex shrink-0 flex-col sticky bottom-0 bg-sidebar', className)}
       {...props}
     />
   );
@@ -336,7 +341,7 @@ const SidebarMenu = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ul
     ref={ref}
-    className={cn('flex flex-col', className)}
+    className={cn('flex flex-col gap-1', className)}
     {...props}
   />
 ));
@@ -351,34 +356,44 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-[[data-state=collapsed]]/sidebar-wrapper:justify-center group-[[data-state=collapsed]]/sidebar-wrapper:p-2 group-[[data-state=collapsed]]/sidebar-wrapper:h-10 group-[[data-state=collapsed]]/sidebar-wrapper:w-10',
+  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md py-2.5 px-3 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-[[data-state=collapsed]]/sidebar-wrapper:justify-center group-[[data-state=collapsed]]/sidebar-wrapper:p-3 group-[[data-state=collapsed]]/sidebar-wrapper:h-10 group-[[data-state=collapsed]]/sidebar-wrapper:w-10 hover:bg-sidebar-hover',
   {
     variants: {
       isActive: {
-        true: 'text-sidebar-primary',
-        false:
-          'text-sidebar-foreground/80 hover:text-sidebar-primary',
+        true: 'bg-sidebar-active',
+        false: 'text-sidebar-foreground/80',
       },
+      isSignOut: {
+        true: 'group-[[data-state=collapsed]]/sidebar-wrapper:justify-start',
+        false: 'group-[[data-state=collapsed]]/sidebar-wrapper:justify-center'
+      }
     },
     defaultVariants: {
       isActive: false,
+      isSignOut: false
     },
   }
 );
 
+type SidebarMenuButtonProps = 
+  (React.ComponentProps<typeof Link> | React.ComponentProps<typeof Button>) & {
+    isActive?: boolean;
+    isSignOut?: boolean;
+    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+    icon?: React.ReactNode;
+    badge?: React.ReactNode;
+    href?: string;
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  };
+
 const SidebarMenuButton = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentProps<typeof Link> &
-    React.ComponentProps<typeof Button> & {
-      isActive?: boolean;
-      tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-      icon?: React.ReactNode;
-      badge?: React.ReactNode;
-    }
+  HTMLAnchorElement | HTMLButtonElement,
+  SidebarMenuButtonProps
 >(
   (
     {
       isActive = false,
+      isSignOut = false,
       tooltip,
       className,
       children,
@@ -397,14 +412,15 @@ const SidebarMenuButton = React.forwardRef<
         {icon &&
           React.cloneElement(icon as React.ReactElement, {
             className: cn(
-              'h-5 w-5 shrink-0',
-               isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-primary'
+              'h-4 w-4 shrink-0',
+               isActive ? 'sidebar-icon-active' : 'text-sidebar-foreground/70 sidebar-icon-default',
+               'group-[[data-state=collapsed]]/sidebar-wrapper:sidebar-collapsed-icon'
             ),
           })}
         <span
           className={cn(
             'group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0',
-             isActive ? 'text-sidebar-primary' : ''
+            'text-sidebar-foreground'
           )}
         >
           {children}
@@ -417,22 +433,39 @@ const SidebarMenuButton = React.forwardRef<
       </>
     );
 
+    // Handle the sign out button specially to ensure it works correctly
+    if (isSignOut && onClick) {
+      return (
+        <button
+          className={cn(sidebarMenuButtonVariants({ isActive, isSignOut }), 'bg-transparent hover:bg-transparent', className)}
+          onClick={onClick}
+          type="button"
+        >
+          {content}
+        </button>
+      );
+    }
+    
     const button = (href && !onClick) ? (
       <Link
-        ref={ref}
+        ref={ref as React.ForwardedRef<HTMLAnchorElement>}
         href={href}
-        className={cn(sidebarMenuButtonVariants({ isActive }), 'bg-transparent hover:bg-transparent', className)}
-        {...props}
+        className={cn(sidebarMenuButtonVariants({ isActive, isSignOut }), 'bg-transparent hover:bg-transparent', className)}
+        {...((() => {
+          const { href: _, ...rest } = props as any;
+          return rest;
+        })())}
       >
         {content}
       </Link>
     ) : (
       <Button
         ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        className={cn(sidebarMenuButtonVariants({ isActive }), 'bg-transparent hover:bg-transparent', className)}
+        className={cn(sidebarMenuButtonVariants({ isActive, isSignOut }), 'bg-transparent hover:bg-transparent', className)}
         variant="ghost"
         onClick={onClick}
-        {...props}
+        type="button"
+        {...(props as React.ComponentProps<typeof Button>)}
       >
         {content}
       </Button>

@@ -12,7 +12,6 @@ import {
 import type {Auth} from 'firebase/auth';
 import { firebaseConfig } from '../config';
 import type { SignUpInput, SignInInput } from '@/lib/types';
-import { useUser } from './use-user';
 
 
 const provider = new GoogleAuthProvider();
@@ -49,7 +48,14 @@ export function handleGoogleSignIn(callback?: () => void) {
 
 export function handleSignOut() {
   const auth = getAuth();
-  signOut(auth);
+  signOut(auth)
+    .then(() => {
+      // Sign-out successful, redirect to home page
+      window.location.href = '/';
+    })
+    .catch((error) => {
+      console.error('Sign out error:', error);
+    });
 }
 
 export async function handleSignUp(data: SignUpInput) {

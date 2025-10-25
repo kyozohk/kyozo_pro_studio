@@ -1,0 +1,156 @@
+/* Sidebar specific styles */
+.sidebar-container {
+  position: fixed;
+  height: 100%;
+  border-right-width: 1px;
+  background-color: hsl(240, 5.9%, 10%);
+  color: hsl(240, 4.8%, 95.9%);
+}
+
+.sidebar-header {
+  display: flex;
+  height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  border-bottom-width: 1px;
+  border-color: hsl(240, 3.7%, 15.9%);
+}
+
+.sidebar-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.sidebar-menu-item {
+  position: relative;
+  width: 100%;
+}
+
+.sidebar-menu-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  color: rgba(240, 240, 246, 0.8);
+}
+
+.sidebar-menu-button:hover {
+  background-color: #1e1e24;
+}
+
+.sidebar-menu-button-active {
+  background-color: #1e1e24;
+}
+
+.sidebar-menu-button-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #ec4899;
+}
+
+.sidebar-icon {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  color: rgba(240, 240, 246, 0.7);
+}
+
+.sidebar-icon-active {
+  color: #ec4899;
+}
+
+.sidebar-menu-button:hover .sidebar-icon {
+  color: #ec4899;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  border-top-width: 1px;
+  border-color: hsl(240, 3.7%, 15.9%);
+  background-color: hsl(240, 5.9%, 10%);
+  z-index: 10;
+}
+
+.signout-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  background-color: transparent;
+  color: rgba(240, 240, 246, 0.8);
+  cursor: pointer;
+  text-align: left;
+}
+
+.signout-button:hover {
+  background-color: #1e1e24;
+}
+
+.signout-button .sidebar-icon {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+  color: rgba(240, 240, 246, 0.7);
+}
+
+.signout-button:hover .sidebar-icon {
+  color: #ec4899;
+}
+
+.sidebar-collapsed .sidebar-menu-button {
+  justify-content: center;
+  padding: 0.75rem;
+}
+
+.sidebar-collapsed .sidebar-text {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-menu-button-active::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+}
+
+.sidebar-collapsed .sidebar-footer-text {
+  display: none;
+}
+
+.sidebar-collapsed .signout-button {
+  justify-content: center;
+  padding: 0.75rem;
+}

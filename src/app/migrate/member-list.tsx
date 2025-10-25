@@ -65,7 +65,7 @@ export default function MemberList({
   const [members, setMembers] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'icon'>('icon');
+  const [viewMode, setViewMode] = useState<'list' | 'icon'>('list');
   const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/firebase/auth-provider';
-import { handleSignOut } from '@/firebase/auth/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +16,7 @@ import Link from 'next/link';
 import AuthDialog from '../auth/auth-dialog';
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   const getInitials = (name: string | null | undefined) => {
@@ -59,7 +58,7 @@ export default function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuItem onClick={() => handleSignOut()}>
+                  <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>

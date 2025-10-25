@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button";
 import styles from './FixedFooter.module.css';
 import AuthDialog from '../auth/auth-dialog';
 import { useAuth } from '@/firebase/auth-provider';
-import { handleSignOut } from '@/firebase/auth/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LogOut } from 'lucide-react';
 
 interface FixedFooterProps {
   className?: string;
 }
 
 const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -25,6 +25,16 @@ const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
       router.push('/dashboard');
     }
   }, [user, router, pathname]);
+  
+  // Hide footer on dashboard pages
+  const isDashboardPage = pathname.includes('/dashboard') || 
+                         pathname.includes('/communities') || 
+                         pathname.includes('/moderation') || 
+                         pathname.includes('/migrate');
+  
+  if (isDashboardPage) {
+    return null;
+  }
 
   const openDialog = () => {
     if (!user) {
@@ -48,14 +58,30 @@ const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
                 />
              </Link>
             {user ? (
-                <Button 
-                    variant="default" 
-                    onClick={() => router.push('/dashboard')}
-                    className={styles.joinButton}
-                    size="sm"
-                >
-                    Dashboard
-                </Button>
+                <div className={styles.buttonGroup}>
+                  <Button 
+                      variant="default" 
+                      onClick={() => router.push('/dashboard')}
+                      className={styles.dashboardButton}
+                      size="sm"
+                  >
+                      Dashboard
+                  </Button>
+                  <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Sign out clicked from footer');
+                        signOut();
+                      }}
+                      className={styles.signOutButton}
+                      size="sm"
+                  >
+                      <LogOut className={styles.signOutIcon} />
+                      <span className={styles.signOutText}>Sign Out</span>
+                  </Button>
+                </div>
             ) : (
               <Button 
                 variant="default" 

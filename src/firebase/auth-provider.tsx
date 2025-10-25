@@ -99,13 +99,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     setAuthError(null);
+    console.log('Sign out function called');
     try {
       await firebaseSignOut(auth);
+      console.log('Sign out successful, redirecting');
+      // Redirect to home page after successful sign out
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
     } catch (error) {
       const authError = error as AuthError;
       console.error("Error signing out:", authError);
       setAuthError(authError.message || "Failed to sign out");
-      throw error;
     }
   };
 
