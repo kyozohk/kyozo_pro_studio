@@ -137,12 +137,19 @@ export default function TestPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : user ? (
-            <div className="space-y-4 text-center">
-              <p>
-                Welcome,{' '}
-                <span className="font-semibold">{user.displayName}</span>!
-              </p>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+            <div className="space-y-4">
+              <div className='text-center'>
+                <p>
+                  Welcome,{' '}
+                  <span className="font-semibold">{user.displayName}</span>!
+                </p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+              </div>
+
+              <div className="rounded-md bg-muted p-4 text-xs font-mono overflow-auto">
+                <pre>{JSON.stringify(user, null, 2)}</pre>
+              </div>
+
               <div className="flex items-center justify-center gap-4">
                 <Button onClick={handleCreateCommunity} disabled={isPending}>
                   {isPending ? (
