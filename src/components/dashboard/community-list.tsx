@@ -8,12 +8,13 @@ import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import AddCommunityDialog from './add-community-dialog';
 import CommunityCard from './community-card';
-import { useUser } from '@/firebase';
-import { createCommunity } from '@/app/actions';
+import { useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 export default function CommunityList() {
   const { user } = useUser();
+  const firestore = useFirestore();
   const { data, loading, addCommunity } = useDashboardData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -43,29 +44,72 @@ export default function CommunityList() {
     setIsAddDialogOpen(false);
   }
   
-  const handleTestCreate = () => {
-    if (!user) {
+  const handleTestCreate = async () => {
+    if (!user || !firestore) {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
         return;
     }
-    const formData = new FormData();
-    formData.append('name', `Test Community ${Math.floor(Math.random() * 1000)}`);
-    formData.append('description', 'This is a test community created with a simple button click.');
-    formData.append('isPublic', 'true');
-    formData.append('userId', user.uid);
-    formData.append('userEmail', user.email || '');
-    formData.append('userName', user.displayName || 'Test User');
-
+    
     startTransition(async () => {
-        const result = await createCommunity(formData);
-        if (result.success && result.community) {
-            toast({ title: 'Test Community Created', description: result.message });
-            addCommunity(result.community);
-        } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.message || 'Failed to create community.' });
-        }
+      try {
+        const batch = writeBatch(firestore);
+        const tenantId = user.uid; // Use user ID as tenant ID
+
+        // 1. Check if tenant exists, if not, create it
+        const tenantRef = doc(firestore, 'tenants', tenantId);
+        // In a real app, you might getDoc and check existence first
+        // For this simplified version, we'll just set it with merge to be safe
+        batch.set(tenantRef, {
+            tenantId: tenantId,
+            name: `${user.displayName}'s Organization`,
+            email: user.email,
+            subscription: { plan: 'free', status: 'active' }
+        }, { merge: true });
+        
+        // 2. Create the new community
+        const communityRef = doc(collection(firestore, 'tenants', tenantId, 'communities'));
+        const newCommunityData = {
+            communityId: communityRef.id,
+            name: `Test Community ${Math.floor(Math.random() * 1000)}`,
+            description: 'This is a test community created with a simple button click.',
+            visibility: 'public',
+            createdBy: tenantId,
+            memberCount: 1,
+            profile: {
+                logoUrl: '',
+                bannerUrl: ''
+            },
+            createdAt: serverTimestamp()
+        };
+        batch.set(communityRef, newCommunityData);
+        
+        // 3. Add the creator as a member of the community
+        const membershipRef = doc(collection(communityRef, 'memberships'), user.uid);
+        batch.set(membershipRef, {
+            memberId: user.uid,
+            role: 'admin',
+            status: 'active',
+            joinDate: serverTimestamp()
+        });
+
+        // 4. Update the user's tenants list
+        const userRef = doc(firestore, 'users', user.uid);
+        batch.update(userRef, {
+            tenants: [tenantId] // This will overwrite, for arrayUnion-like behavior, read and then write.
+        });
+
+        await batch.commit();
+
+        toast({ title: 'Test Community Created', description: 'Successfully created test community!' });
+        addCommunity({ id: communityRef.id, ...newCommunityData });
+
+      } catch (error: any) {
+          console.error("Error creating community:", error);
+          toast({ variant: 'destructive', title: 'Error creating community', description: error.message });
+      }
     });
   }
+
 
   return (
     <>
