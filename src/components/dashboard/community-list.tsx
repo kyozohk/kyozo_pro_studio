@@ -8,8 +8,10 @@ import Image from 'next/image';
 import { useState } from 'react';
 import AddCommunityDialog from './add-community-dialog';
 import CommunityCard from './community-card';
+import { useUser } from '@/firebase';
 
 export default function CommunityList() {
+  const { user } = useUser();
   const { data, loading, addCommunity } = useDashboardData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
@@ -20,6 +22,14 @@ export default function CommunityList() {
             <p className="ml-4 text-muted-foreground">Loading communities...</p>
         </div>
     );
+  }
+
+  if (!user) {
+    return (
+        <div className="flex items-center justify-center py-10">
+            <p className="text-muted-foreground">Please sign in to see your communities.</p>
+        </div>
+    )
   }
   
   const communities = data.communities || [];

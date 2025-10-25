@@ -3,17 +3,14 @@
 import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
-import { getApps, initializeApp, getApp, cert } from 'firebase-admin/app';
+import { getApps, initializeApp, getApp } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin SDK
-if (!getApps().length) {
-    // If you have a service account key, you can use it like this:
-    // const serviceAccount = require('../../../serviceAccountKey.json');
-    // initializeApp({ credential: cert(serviceAccount) });
-    // For environments like Google Cloud Run, initialization is often automatic
+// Initialize Firebase Admin SDK if not already initialized
+if (getApps().length === 0) {
     initializeApp();
 }
+
 
 const adminFirestore = getAdminFirestore();
 
