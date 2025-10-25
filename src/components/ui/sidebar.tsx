@@ -355,7 +355,7 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       isActive: {
-        true: 'text-sidebar-primary-foreground',
+        true: 'text-sidebar-primary bg-sidebar-accent/10',
         false:
           'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
       },
@@ -400,13 +400,13 @@ const SidebarMenuButton = React.forwardRef<
               'h-5 w-5 shrink-0',
               isActive
                 ? 'text-sidebar-primary'
-                : 'text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-accent-foreground'
+                : 'text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-primary'
             ),
           })}
         <span
           className={cn(
             'group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0',
-            isActive && 'text-sidebar-accent-foreground'
+            isActive && 'text-sidebar-primary'
           )}
         >
           {children}
@@ -469,8 +469,8 @@ const SidebarUserProfile = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<'div'> & {
     icon?: React.ReactNode;
-    email?: string;
-    name?: string;
+    email?: string | null;
+    name?: string | null;
   }
 >(({ className, icon, email, name, children, ...props }, ref) => {
   const { state } = useSidebar();
@@ -491,16 +491,16 @@ const SidebarUserProfile = React.forwardRef<
       )}
       <div
         className={cn(
-          'flex grow flex-col group-[[data-state=collapsed]]/sidebar-wrapper:sr-only'
+          'flex grow flex-col overflow-hidden group-[[data-state=collapsed]]/sidebar-wrapper:sr-only'
         )}
       >
         {name && (
-          <p className="text-sm font-medium leading-tight text-sidebar-foreground">
+          <p className="text-sm font-medium leading-tight text-sidebar-foreground truncate">
             {name}
           </p>
         )}
         {email && (
-          <p className="text-xs text-sidebar-foreground/70">{email}</p>
+          <p className="text-xs text-sidebar-foreground/70 truncate">{email}</p>
         )}
       </div>
       <div className="group-[[data-state=collapsed]]/sidebar-wrapper:sr-only">
@@ -510,6 +510,7 @@ const SidebarUserProfile = React.forwardRef<
   );
 });
 SidebarUserProfile.displayName = 'SidebarUserProfile';
+
 
 export {
   Sidebar,
