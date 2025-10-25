@@ -7,7 +7,7 @@
       "properties": {
         "userId": {
           "type": "string",
-          "description": "The unique identifier for the user."
+          "description": "The unique identifier for the user, matching the auth UID."
         },
         "displayName": {
           "type": "string",
@@ -28,7 +28,7 @@
           "items": {
             "type": "string"
           },
-          "description": "An array of tenant IDs the user belongs to."
+          "description": "An array of tenant IDs the user belongs to. The tenant ID is the UID of the owner."
         }
       },
       "required": ["userId", "displayName", "email"]
@@ -40,7 +40,7 @@
       "properties": {
         "tenantId": {
           "type": "string",
-          "description": "The unique identifier for the tenant, usually the owner's user ID."
+          "description": "The unique identifier for the tenant, which is the user ID of the owner."
         },
         "name": {
           "type": "string",
@@ -143,7 +143,7 @@
       "schema": {
         "$ref": "#/entities/Tenant"
       },
-      "description": "Top-level collection for multi-tenancy. Each document is an organization."
+      "description": "Top-level collection for multi-tenancy. Each document is an organization, where the tenantId is the UID of the owner."
     },
     "/tenants/{tenantId}/communities/{communityId}": {
       "schema": {
