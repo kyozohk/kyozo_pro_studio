@@ -8,7 +8,6 @@ import {
   Database,
   Settings,
   LayoutGrid,
-  Search,
   Users,
   Home,
   LogOut,
@@ -30,7 +29,6 @@ import {
   SidebarUserProfile,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { handleSignOut } from '@/firebase/auth/client';
 import CommunityList from '@/components/dashboard/community-list';

@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore, type DocumentData } from 'firebase/firestore';
 import { oldFirebaseConfig } from '@/firebase/old-config';
-import { Loader2, Download, Home, Users, Settings, Database, LayoutGrid, Search, LogOut, ShieldCheck } from 'lucide-react';
+import { Loader2, Download, Home, Users, Settings, Database, LayoutGrid, LogOut, ShieldCheck } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import CommunityList from './community-list';

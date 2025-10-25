@@ -12,7 +12,6 @@ import {
   Database,
   LogOut,
   LayoutGrid,
-  Search,
   ShieldCheck,
 } from 'lucide-react';
 import {
@@ -30,13 +29,6 @@ import {
   SidebarUserProfile,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { handleSignOut } from '@/firebase/auth/client';
 

@@ -351,19 +351,20 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-    "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-[[data-state=collapsed]]/sidebar-wrapper:justify-center group-[[data-state=collapsed]]/sidebar-wrapper:p-2 group-[[data-state=collapsed]]/sidebar-wrapper:h-10 group-[[data-state=collapsed]]/sidebar-wrapper:w-10",
-    {
-      variants: {
-        isActive: {
-          true: "text-sidebar-primary-foreground",
-          false: "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-        },
+  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm font-medium outline-none ring-sidebar-ring transition-colors focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-[[data-state=collapsed]]/sidebar-wrapper:justify-center group-[[data-state=collapsed]]/sidebar-wrapper:p-2 group-[[data-state=collapsed]]/sidebar-wrapper:h-10 group-[[data-state=collapsed]]/sidebar-wrapper:w-10',
+  {
+    variants: {
+      isActive: {
+        true: 'text-sidebar-primary-foreground',
+        false:
+          'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
       },
-      defaultVariants: {
-        isActive: false,
-      },
-    }
-  );
+    },
+    defaultVariants: {
+      isActive: false,
+    },
+  }
+);
 
 const SidebarMenuButton = React.forwardRef<
   HTMLAnchorElement,
@@ -373,11 +374,20 @@ const SidebarMenuButton = React.forwardRef<
       tooltip?: string | React.ComponentProps<typeof TooltipContent>;
       icon?: React.ReactNode;
       badge?: React.ReactNode;
-      href: string;
+      href?: string;
     }
 >(
   (
-    { isActive = false, tooltip, className, children, icon, badge, href, ...props },
+    {
+      isActive = false,
+      tooltip,
+      className,
+      children,
+      icon,
+      badge,
+      href,
+      ...props
+    },
     ref
   ) => {
     const { isMobile, state } = useSidebar();
@@ -387,16 +397,18 @@ const SidebarMenuButton = React.forwardRef<
         {icon &&
           React.cloneElement(icon as React.ReactElement, {
             className: cn(
-              "h-5 w-5 shrink-0",
-               isActive
-                ? "text-sidebar-primary"
-                : "text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-primary",
-            )
+              'h-5 w-5 shrink-0',
+              isActive
+                ? 'text-sidebar-primary'
+                : 'text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-accent-foreground'
+            ),
           })}
-        <span className={cn(
-            "group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0",
-            isActive && "text-sidebar-foreground"
-        )}>
+        <span
+          className={cn(
+            'group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0',
+            isActive && 'text-sidebar-accent-foreground'
+          )}
+        >
           {children}
         </span>
         {badge && (
@@ -405,13 +417,13 @@ const SidebarMenuButton = React.forwardRef<
           </div>
         )}
       </>
-    )
+    );
 
     const button = href ? (
       <Link
         ref={ref}
         href={href}
-        className={cn(sidebarMenuButtonVariants({ isActive, className }))}
+        className={cn(sidebarMenuButtonVariants({ isActive }), className)}
         {...props}
       >
         {content}
@@ -419,7 +431,7 @@ const SidebarMenuButton = React.forwardRef<
     ) : (
       <Button
         ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        className={cn(sidebarMenuButtonVariants({ isActive, className }))}
+        className={cn(sidebarMenuButtonVariants({ isActive }), className)}
         {...props}
       >
         {content}
@@ -440,7 +452,10 @@ const SidebarMenuButton = React.forwardRef<
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent {...(typeof tooltip === 'string' ? {} : tooltip)} side="right">
+          <TooltipContent
+            {...(typeof tooltip === 'string' ? {} : tooltip)}
+            side="right"
+          >
             {typeof tooltip === 'string' ? tooltip : tooltip.children}
           </TooltipContent>
         </Tooltip>
