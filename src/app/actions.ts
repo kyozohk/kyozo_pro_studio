@@ -3,10 +3,19 @@
 import { waitlistSchema, type WaitlistInput } from '@/lib/types';
 import { moderateCommunityContent } from '@/ai/flows/community-content-moderation';
 import { revalidatePath } from 'next/cache';
-import { getApps, initializeApp, getApp } from 'firebase-admin/app';
+import { getApps, initializeApp, getApp, cert } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
-import { writeBatch, doc, serverTimestamp, arrayUnion } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+
+// Initialize Firebase Admin SDK
+if (!getApps().length) {
+    // If you have a service account key, you can use it like this:
+    // const serviceAccount = require('../../../serviceAccountKey.json');
+    // initializeApp({ credential: cert(serviceAccount) });
+    // For environments like Google Cloud Run, initialization is often automatic
+    initializeApp();
+}
+
+const adminFirestore = getAdminFirestore();
 
 
 export async function joinWaitlist(data: WaitlistInput) {
@@ -44,20 +53,55 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 }
 
 export async function exportCommunity(communityData: any, members: any[]) {
-    // This is a placeholder now. We will use the client SDK for this.
-    // The server action now just simulates the import.
     try {
-        console.log("Simulating community import for:", communityData.name);
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const batch = adminFirestore.batch();
+        const tenantId = communityData.createdBy;
+
+        // 1. Create/update Tenant
+        const tenantRef = adminFirestore.collection('tenants').doc(tenantId);
+        batch.set(tenantRef, {
+            tenantId: tenantId,
+            name: `${communityData.name}'s Organization`, // Placeholder name
+            email: 'placeholder@example.com', // Placeholder email
+            subscription: {
+                plan: 'pro',
+                status: 'active'
+            }
+        }, { merge: true });
+
+        // 2. Create Community
+        const communityRef = tenantRef.collection('communities').doc(communityData.communityId);
+        batch.set(communityRef, communityData);
+
+        // 3. Create Memberships and update user profiles
+        for (const member of members) {
+            const memberId = member.id;
+
+            // Create membership doc
+            const membershipRef = communityRef.collection('memberships').doc(memberId);
+            batch.set(membershipRef, {
+                memberId: memberId,
+                role: member.role === 'community_admin' ? 'admin' : 'member',
+                status: 'active',
+                joinDate: member.joinDate || new Date().toISOString(),
+            });
+            
+            // Update user's tenant list
+            const userRef = adminFirestore.collection('users').doc(memberId);
+             batch.update(userRef, {
+                tenants: getAdminFirestore.FieldValue.arrayUnion(tenantId)
+            });
+        }
         
-        // This is where you would interact with the *new* firestore instance
-        // to write the data. For now, we'll just log it.
-        console.log("Community data to be written:", communityData);
-        console.log(`Found ${members.length} members to write.`);
+        await batch.commit();
+
+        // Revalidate paths to show new data
+        revalidatePath('/dashboard');
+        revalidatePath('/communities');
         
         return { success: true, message: `Community '${communityData.name}' and its ${members.length} members imported successfully!` };
     } catch(error: any) {
-        console.error('Import failed during simulation:', error);
+        console.error('Error exporting community:', error);
         return { success: false, message: `Import failed: ${error.message}` };
     }
 }
