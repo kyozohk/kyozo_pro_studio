@@ -6,13 +6,18 @@ import { revalidatePath } from 'next/cache';
 import { getApps, initializeApp, getApp } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore, FieldValue } from 'firebase-admin/firestore';
 
-// Initialize Firebase Admin SDK if not already initialized
-if (getApps().length === 0) {
-    initializeApp();
+
+function getAdminApp() {
+    if (getApps().length > 0) {
+        return getApp();
+    } else {
+        return initializeApp();
+    }
 }
 
-
-const adminFirestore = getAdminFirestore();
+function getAdminDb() {
+    return getAdminFirestore(getAdminApp());
+}
 
 
 export async function joinWaitlist(data: WaitlistInput) {
@@ -51,6 +56,7 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
 
 export async function exportCommunity(communityData: any, members: any[]) {
     try {
+        const adminFirestore = getAdminDb();
         const batch = adminFirestore.batch();
         const tenantId = communityData.createdBy;
 
@@ -116,6 +122,7 @@ export async function createCommunity(formData: FormData) {
     }
 
     try {
+        const adminFirestore = getAdminDb();
         const batch = adminFirestore.batch();
         const tenantId = userId; // Use user ID as tenant ID
 

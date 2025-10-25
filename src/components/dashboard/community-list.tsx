@@ -5,15 +5,19 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui
 import { Button } from '../ui/button';
 import { ArrowRight, Loader2, Plus } from 'lucide-react';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import AddCommunityDialog from './add-community-dialog';
 import CommunityCard from './community-card';
 import { useUser } from '@/firebase';
+import { createCommunity } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CommunityList() {
   const { user } = useUser();
   const { data, loading, addCommunity } = useDashboardData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   if (loading) {
     return (
@@ -38,16 +42,46 @@ export default function CommunityList() {
     addCommunity(newCommunity);
     setIsAddDialogOpen(false);
   }
+  
+  const handleTestCreate = () => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in.' });
+        return;
+    }
+    const formData = new FormData();
+    formData.append('name', `Test Community ${Math.floor(Math.random() * 1000)}`);
+    formData.append('description', 'This is a test community created with a simple button click.');
+    formData.append('isPublic', 'true');
+    formData.append('userId', user.uid);
+    formData.append('userEmail', user.email || '');
+    formData.append('userName', user.displayName || 'Test User');
+
+    startTransition(async () => {
+        const result = await createCommunity(formData);
+        if (result.success && result.community) {
+            toast({ title: 'Test Community Created', description: result.message });
+            addCommunity(result.community);
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.message || 'Failed to create community.' });
+        }
+    });
+  }
 
   return (
     <>
       <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-headline font-bold">Your Communities</h2>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Community
-            </Button>
+            <div className='flex items-center gap-2'>
+                <Button onClick={handleTestCreate} variant="outline" disabled={isPending}>
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                     Create Test Community
+                </Button>
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Community
+                </Button>
+            </div>
           </div>
           {communities.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
