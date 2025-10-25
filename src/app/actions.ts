@@ -102,3 +102,76 @@ export async function exportCommunity(communityData: any, members: any[]) {
         return { success: false, message: `Import failed: ${error.message}` };
     }
 }
+
+export async function createCommunity(formData: FormData) {
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const isPublic = formData.get('isPublic') === 'true';
+    const userId = formData.get('userId') as string;
+    const userEmail = formData.get('userEmail') as string;
+    const userName = formData.get('userName') as string;
+
+    if (!name || !userId) {
+        return { success: false, message: 'Missing required data.' };
+    }
+
+    try {
+        const batch = adminFirestore.batch();
+        const tenantId = userId; // Use user ID as tenant ID
+
+        // 1. Check if tenant exists, if not, create it
+        const tenantRef = adminFirestore.collection('tenants').doc(tenantId);
+        const tenantSnap = await tenantRef.get();
+        if (!tenantSnap.exists) {
+            batch.set(tenantRef, {
+                tenantId: tenantId,
+                name: `${userName}'s Organization`,
+                email: userEmail,
+                subscription: { plan: 'free', status: 'active' }
+            });
+        }
+        
+        // 2. Create the new community
+        const communityRef = adminFirestore.collection('tenants').doc(tenantId).collection('communities').doc();
+        const newCommunityData = {
+            communityId: communityRef.id,
+            name,
+            description,
+            visibility: isPublic ? 'public' : 'private',
+            createdBy: tenantId,
+            memberCount: 1,
+            profile: {
+                logoUrl: '',
+                bannerUrl: ''
+            },
+            createdAt: FieldValue.serverTimestamp()
+        };
+        batch.set(communityRef, newCommunityData);
+        
+        // 3. Add the creator as a member of the community
+        const membershipRef = communityRef.collection('memberships').doc(userId);
+        batch.set(membershipRef, {
+            memberId: userId,
+            role: 'admin',
+            status: 'active',
+            joinDate: FieldValue.serverTimestamp()
+        });
+
+        // 4. Update the user's tenants list
+        const userRef = adminFirestore.collection('users').doc(userId);
+        batch.update(userRef, {
+            tenants: FieldValue.arrayUnion(tenantId)
+        });
+
+        await batch.commit();
+
+        revalidatePath('/communities');
+        revalidatePath('/dashboard');
+
+        return { success: true, message: `Community '${name}' created successfully!`, community: {id: communityRef.id, ...newCommunityData} };
+
+    } catch (error: any) {
+        console.error("Error creating community:", error);
+        return { success: false, message: `Failed to create community: ${error.message}` };
+    }
+}

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useTransition } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
+import { exportCommunity } from '@/app/actions';
 
 interface ImportCsvDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onImport: (communityData: any, members: any[]) => void;
+    onImport: (communityData: any, members: any[]) => Promise<void>;
 }
 
 export default function ImportCsvDialog({ isOpen, onClose, onImport }: ImportCsvDialogProps) {
@@ -66,7 +67,7 @@ export default function ImportCsvDialog({ isOpen, onClose, onImport }: ImportCsv
                  return;
             }
             
-            onImport(communityData, membersData);
+            await onImport(communityData, membersData);
 
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Import Error', description: error.message });
