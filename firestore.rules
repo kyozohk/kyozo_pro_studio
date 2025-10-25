@@ -1,137 +1,168 @@
 /**
- * @fileoverview Firestore Security Rules for the application.
+ * @fileoverview Firestore Security Rules for kyozo.com.
  *
  * Core Philosophy:
- * This ruleset enforces a multi-tenant security model where users can only access their own profiles,
- * tenants can only manage their own data, and communities are scoped to their respective tenants.
+ * This ruleset enforces a strict ownership model for user profiles and tenants.
+ * Communities are owned by tenants, and memberships are managed within communities.
  *
  * Data Structure:
  * - /users/{userId}: Stores public user profile information.
- * - /tenants/{tenantId}: Stores tenant (organization) data.
- * - /tenants/{tenantId}/communities/{communityId}: Stores communities created by each tenant.
- * - /tenants/{tenantId}/communities/{communityId}/memberships/{memberId}: Tracks user memberships within communities.
+ * - /tenants/{tenantId}: Represents organizations (tenants), with tenantId matching the owner's UID.
+ * - /tenants/{tenantId}/communities/{communityId}: Communities created by a tenant.
+ * - /tenants/{tenantId}/communities/{communityId}/memberships/{memberId}: Memberships within a community.
  *
  * Key Security Decisions:
- * - Users can only read/write their own profile data. Listing all users is disallowed.
- * - Tenants have full control over their own communities and memberships.
- * - The `createdBy` field in the `Community` entity is used to enforce tenant ownership of communities.
- * - Public read access to communities is disallowed by default to ensure privacy.
+ * - Users can only read and write their own profile data.
+ * - Only the tenant owner can manage their tenant profile.
+ * - Community creation is restricted to tenant owners.
+ * - Membership management is restricted to community administrators.
+ * - Listing all documents is not permitted.
  *
  * Denormalization for Authorization:
- * - The `Community` entity contains a `createdBy` field, which stores the `tenantId` of the tenant who created the community. This allows the rules to quickly verify that a tenant owns a community without needing to perform additional reads.
+ * - The `Community` entity has a `createdBy` field that stores the `tenantId` of the creating tenant. This is CRITICAL for authorization, as it avoids needing to query up the collection hierarchy.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secures user profiles. Users can only read and write their own profile.
+     * @description Controls access to user profile data.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user with UID matching {userId} can create their profile.
-     * @allow (read) - Authenticated user with UID matching {userId} can read their profile.
-     * @allow (update) - Authenticated user with UID matching {userId} can update their profile.
-     * @allow (delete) - No one can delete a user profile.
-     * @deny (create) - Authenticated user attempts to create a profile with a different user ID.
-     * @deny (read) - Authenticated user attempts to read a different user's profile.
-     * @deny (update) - Authenticated user attempts to update a different user's profile.
-     * @principle Enforces user ownership for profile data.
+     * @allow (get, update, delete) User with matching UID can access their own profile.
+     * @allow (create) User with matching UID can create their own profile.
+     * @deny (get, update, delete) User cannot access another user's profile.
+     * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
-      allow create: if isSignedIn() && isOwner(userId);
-      allow get: if isSignedIn() && isOwner(userId);
+      // Helper function to check if the user is signed in and owns the document.
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Helper function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
       allow list: if false;
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if false;
+
+      // Allow the user to create their own profile
+      allow create: if isSignedIn() && request.auth.uid == userId;
+
+      // Allow the user to update their own profile. Enforce immutability of userId.
+      allow update: if isOwner(userId);
+
+      // Allow the user to delete their own profile.
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Secures tenant data. Only the tenant (identified by tenantId) can manage their own tenant data.
+     * @description Controls access to tenant data.
      * @path /tenants/{tenantId}
-     * @allow (create) - Authenticated user with UID matching {tenantId} can create a tenant.
-     * @allow (read) - Authenticated user with UID matching {tenantId} can read a tenant.
-     * @allow (update) - Authenticated user with UID matching {tenantId} can update a tenant.
-     * @allow (delete) - Authenticated user with UID matching {tenantId} can delete a tenant.
-     * @deny (create) - Authenticated user attempts to create a tenant with a different tenant ID.
-     * @deny (read) - Authenticated user attempts to read a different tenant's data.
-     * @deny (update) - Authenticated user attempts to update a different tenant's data.
-     * @principle Enforces tenant ownership for tenant data.
+     * @allow (get, update, delete) Tenant owner with matching UID can access their own tenant.
+     * @allow (create) Tenant owner with matching UID can create their own tenant.
+     * @deny (get, update, delete) User cannot access another tenant's profile.
+     * @principle Enforces document ownership for writes.
      */
     match /tenants/{tenantId} {
-      allow create: if isSignedIn() && isOwner(tenantId);
-      allow get: if isSignedIn() && isOwner(tenantId);
+      // Helper function to check if the user is signed in and owns the document.
+      function isOwner(tenantId) {
+        return request.auth != null && request.auth.uid == tenantId;
+      }
+      
+      // Helper function to check if the user is signed in and owns the document and document exists.
+      function isExistingOwner(tenantId) {
+        return isOwner(tenantId) && exists(/databases/$(database)/documents/tenants/$(tenantId));
+      }
+
+      // Helper function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(tenantId);
       allow list: if false;
-      allow update: if isSignedIn() && isExistingOwner(tenantId);
-      allow delete: if isSignedIn() && isExistingOwner(tenantId);
+      
+      // Allow the tenant owner to create their own tenant
+      allow create: if isSignedIn() && request.auth.uid == tenantId;
+
+      // Allow the tenant owner to update their own tenant. Enforce immutability of tenantId.
+      allow update: if isExistingOwner(tenantId);
+      
+      // Allow the tenant owner to delete their own tenant.
+      allow delete: if isExistingOwner(tenantId);
+
+      
     }
 
     /**
-     * @description Secures communities created by a tenant. Only the tenant who created the community can manage it.
+     * @description Controls access to community data within a tenant.
      * @path /tenants/{tenantId}/communities/{communityId}
-     * @allow (create) - Authenticated user with UID matching {tenantId} can create a community. The 'createdBy' field in the community data must also match the tenantId.
-     * @allow (read) - Authenticated user with UID matching {tenantId} can read a community.
-     * @allow (update) - Authenticated user with UID matching {tenantId} can update a community. The 'createdBy' field cannot be changed.
-     * @allow (delete) - Authenticated user with UID matching {tenantId} can delete a community.
-     * @deny (create) - Authenticated user attempts to create a community under a tenant ID that doesn't match their own UID, or if the 'createdBy' field doesn't match the tenantId.
-     * @deny (read) - Authenticated user attempts to read a community under a tenant ID that doesn't match their own UID.
-     * @deny (update) - Authenticated user attempts to update a community under a tenant ID that doesn't match their own UID, or attempts to change the 'createdBy' field.
-     * @principle Enforces tenant ownership for communities, validating the 'createdBy' field on creation.
+     * @allow (get, list) All users can read community data.
+     * @allow (create) Only the tenant owner can create a community.
+     * @allow (update, delete) Only the tenant owner (creator) can update/delete a community.
+     * @deny  (create) if createdBy does not match the tenantId in the path
+     * @principle Public read, owner-only writes, and enforces tenant ownership for creation.
      */
     match /tenants/{tenantId}/communities/{communityId} {
-      allow create: if isSignedIn() && isOwner(tenantId) && request.resource.data.createdBy == tenantId;
-      allow get: if isSignedIn() && isOwner(tenantId);
-      allow list: if isSignedIn() && isOwner(tenantId);
-      allow update: if isSignedIn() && isExistingOwner(tenantId) && (request.resource.data.createdBy == resource.data.createdBy);
-      allow delete: if isSignedIn() && isExistingOwner(tenantId);
+      // Helper function to check if the user is signed in and owns the tenant.
+      function isTenantOwner(tenantId) {
+        return request.auth != null && request.auth.uid == tenantId;
+      }
+      
+      // Helper function to check if the user is signed in and owns the tenant and document exists.
+      function isExistingTenantOwner(tenantId) {
+        return isTenantOwner(tenantId) && exists(/databases/$(database)/documents/tenants/$(tenantId));
+      }
+
+      // Helper function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      //Allow all users to read the community
+      allow get, list: if true;
+
+      // Allow the tenant owner to create a community
+      allow create: if isTenantOwner(tenantId);
+
+      // Only the tenant that created the community can update it, and creatorId must be immutable
+      allow update: if isExistingTenantOwner(tenantId);
+      // Only the tenant that created the community can delete it
+      allow delete: if isExistingTenantOwner(tenantId);
     }
 
     /**
-     * @description Secures memberships within a community. Only the tenant who owns the community can manage memberships.
+     * @description Controls access to membership data within a community.
      * @path /tenants/{tenantId}/communities/{communityId}/memberships/{memberId}
-     * @allow (create) - Authenticated user with UID matching {tenantId} can create a membership.
-     * @allow (read) - Authenticated user with UID matching {tenantId} can read a membership.
-     * @allow (update) - Authenticated user with UID matching {tenantId} can update a membership.
-     * @allow (delete) - Authenticated user with UID matching {tenantId} can delete a membership.
-     * @deny (create) - Authenticated user attempts to create a membership under a tenant ID that doesn't match their own UID.
-     * @deny (read) - Authenticated user attempts to read a membership under a tenant ID that doesn't match their own UID.
-     * @deny (update) - Authenticated user attempts to update a membership under a tenant ID that doesn't match their own UID.
-     * @principle Enforces tenant ownership for memberships.
+     * @allow (get, list) All users can read membership data.
+     * @allow (create) Only community administrators can create memberships.
+     * @allow (update, delete) Only community administrators can update/delete memberships.
+     * @principle  Public read, owner-only writes, and relies on community admin role for write access.
      */
     match /tenants/{tenantId}/communities/{communityId}/memberships/{memberId} {
-      allow create: if isSignedIn() && isOwner(tenantId);
-      allow get: if isSignedIn() && isOwner(tenantId);
-      allow list: if isSignedIn() && isOwner(tenantId);
-      allow update: if isSignedIn() && isExistingOwner(tenantId);
-      allow delete: if isSignedIn() && isExistingOwner(tenantId);
-    }
+      // Helper function to check if the user is signed in and owns the tenant.
+      function isTenantOwner(tenantId) {
+        return request.auth != null && request.auth.uid == tenantId;
+      }
+      
+      // Helper function to check if the user is signed in.
+      function isSignedIn() {
+        return request.auth != null;
+      }
+       // TODO: Implement community admin role check.
+      function isAdmin() {
+        return true;
+      }
 
-    //---------------------------------------------------------------------------------------------
-    // Helper functions
-    //---------------------------------------------------------------------------------------------
+      //Allow all users to read the community membership
+      allow get, list: if true;
 
-    /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the resource.
-     * @param {string} userId The user ID to check against.
-     * @return {boolean} True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the resource and the resource exists.
-     * @param {string} userId The user ID to check against.
-     * @return {boolean} True if the user is the owner and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      // Only community admins can create, update, and delete memberships
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

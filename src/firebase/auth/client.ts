@@ -12,6 +12,7 @@ import {
 import type {Auth} from 'firebase/auth';
 import { firebaseConfig } from '../config';
 import type { SignUpInput, SignInInput } from '@/lib/types';
+import { useUser } from './use-user';
 
 
 const getGoogleProvider = () => {
