@@ -1,7 +1,15 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useTransition } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import React, { useState, useEffect, useTransition } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,10 +17,97 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { CloudUpload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { useUser } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import ImportCsvDialog from './import-csv-dialog';
-import { createCommunity } from '@/app/actions';
+import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
+
+async function createCommunity(
+  firestore: any,
+  user: any,
+  communityData: any
+) {
+  if (!firestore || !user) {
+    throw new Error('Firestore or user not available');
+  }
+
+  const tenantId = user.uid;
+  const tenantRef = doc(firestore, `tenants/${tenantId}`);
+  const communityCollectionRef = doc(
+    firestore,
+    `tenants/${tenantId}/communities`,
+    communityData.communityId
+  );
+  const membershipRef = doc(
+    firestore,
+    `tenants/${tenantId}/communities/${communityData.communityId}/memberships/${tenantId}`
+  );
+  const userRef = doc(firestore, `users/${user.uid}`);
+
+  const batch = writeBatch(firestore);
+
+  const tenantPayload = {
+    tenantId: tenantId,
+    name: `${user.displayName}'s Organization`,
+    email: user.email,
+    subscription: { plan: 'free', status: 'active' },
+  };
+  batch.set(tenantRef, tenantPayload, { merge: true });
+
+  batch.set(communityCollectionRef, communityData);
+
+  const membershipPayload = {
+    memberId: tenantId,
+    role: 'admin',
+    status: 'active',
+    joinDate: serverTimestamp(),
+  };
+  batch.set(membershipRef, membershipPayload);
+
+  batch.update(userRef, {
+    tenants: [tenantId],
+  });
+
+  return batch.commit().catch(serverError => {
+    // Create and emit contextual errors for each failed operation in the batch
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: tenantRef.path,
+        operation: 'create',
+        requestResourceData: tenantPayload,
+      })
+    );
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: communityCollectionRef.path,
+        operation: 'create',
+        requestResourceData: communityData,
+      })
+    );
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: membershipRef.path,
+        operation: 'create',
+        requestResourceData: membershipPayload,
+      })
+    );
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'update',
+        requestResourceData: { tenants: [tenantId] },
+      })
+    );
+    // Re-throw to be caught by the calling function's try/catch
+    throw serverError;
+  });
+}
 
 
 interface AddCommunityDialogProps {
@@ -31,6 +126,7 @@ const iconOptions = [
 
 export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCommunityDialogProps) {
     const { user } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     
@@ -59,7 +155,7 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
-        if (!user) {
+        if (!user || !firestore) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to create a community.' });
             return;
         }
@@ -74,22 +170,30 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
             communityDesc = `This is a default community called ${communityName}. We are awesome.`;
         }
 
+        const newCommunityRef = doc(collection(firestore, `tenants/${user.uid}/communities`));
+        const communityId = newCommunityRef.id;
+
         const communityData = {
+          communityId: communityId,
           name: communityName,
           description: communityDesc,
           visibility: visibility,
           profile: { logoUrl: '', bannerUrl: '' },
+          createdBy: user.uid,
+          memberCount: 1,
+          createdAt: serverTimestamp(),
         };
         
         startTransition(async () => {
-            const result = await createCommunity(communityData, user.uid, user.email!, user.displayName!);
-            
-            if (result.success) {
+            try {
+                await createCommunity(firestore, user, communityData);
                 toast({ title: 'Community Created', description: `Successfully created ${communityName}` });
-                onSuccess(result.data);
+                onSuccess({ id: communityId, ...communityData });
                 onClose();
-            } else {
-                toast({ variant: 'destructive', title: 'Error', description: result.message });
+            } catch (error) {
+                // The error is emitted by the createCommunity function, so we just need to avoid crashing.
+                // The FirebaseErrorListener will show the error to the user.
+                console.log("Create community failed, error was handled by emitter.")
             }
         });
     };
