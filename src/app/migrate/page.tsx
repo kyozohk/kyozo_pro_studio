@@ -25,11 +25,14 @@ import {
   SidebarFooter,
   SidebarInput,
   SidebarSeparator,
+  SidebarUserProfile,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
 import { handleSignOut } from '@/firebase/auth/client';
 import ExportPreviewDialog from './export-preview-dialog';
-import { createCommunity } from '@/app/actions';
+import { exportCommunity } from '@/app/actions';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 let oldApp: FirebaseApp;
 if (!getApps().some(app => app.name === 'oldDB')) {
@@ -120,7 +123,7 @@ export default function MigratePage() {
     if (!exportData || !user) return;
 
     startTransition(async () => {
-        const result = await createCommunity((exportData as any).community, user.uid);
+        const result = await exportCommunity((exportData as any).community, (exportData as any).members, user.uid);
         if (result.success) {
             toast({ title: 'Export Successful', description: result.message });
         } else {
@@ -195,13 +198,25 @@ export default function MigratePage() {
         </SidebarContent>
         <SidebarFooter>
             <SidebarSeparator />
-            <SidebarMenu className="p-2">
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => handleSignOut()} icon={<LogOut />}>
-                        Log Out
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
+            <SidebarUserProfile
+              name={user.displayName}
+              email={user.email}
+              icon={
+                <Avatar>
+                  <AvatarImage src={user.photoURL || undefined} />
+                  <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                </Avatar>
+              }
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10"
+                onClick={() => handleSignOut()}
+              >
+                <LogOut />
+              </Button>
+            </SidebarUserProfile>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>

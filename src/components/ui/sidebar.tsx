@@ -355,7 +355,7 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       isActive: {
-        true: "bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground",
+        true: "text-sidebar-primary-foreground bg-sidebar-primary hover:bg-sidebar-primary/90",
         false: "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       },
     },
@@ -388,9 +388,9 @@ const SidebarMenuButton = React.forwardRef<
           React.cloneElement(icon as React.ReactElement, {
             className: cn(
               "h-5 w-5 shrink-0",
-              isActive
+               isActive
                 ? "text-sidebar-primary-foreground"
-                : "text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-accent-foreground",
             )
           })}
         <span className="group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0">
@@ -454,7 +454,7 @@ const SidebarUserProfile = React.forwardRef<
     email?: string;
     name?: string;
   }
->(({ className, icon, email, name, ...props }, ref) => {
+>(({ className, icon, email, name, children, ...props }, ref) => {
   const { state } = useSidebar();
   return (
     <div
@@ -484,6 +484,9 @@ const SidebarUserProfile = React.forwardRef<
         {email && (
           <p className="text-xs text-sidebar-foreground/70">{email}</p>
         )}
+      </div>
+      <div className="group-[[data-state=collapsed]]/sidebar-wrapper:sr-only">
+        {children}
       </div>
     </div>
   );

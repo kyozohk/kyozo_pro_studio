@@ -28,6 +28,7 @@ import {
   SidebarFooter,
   SidebarInput,
   SidebarSeparator,
+  SidebarUserProfile,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
@@ -114,13 +115,25 @@ export default function ModerationPage() {
         </SidebarContent>
         <SidebarFooter>
             <SidebarSeparator />
-            <SidebarMenu className="p-2">
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => handleSignOut()} icon={<LogOut />}>
-                        Log Out
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
+            <SidebarUserProfile
+              name={user.displayName}
+              email={user.email}
+              icon={
+                <Avatar>
+                  <AvatarImage src={user.photoURL || undefined} />
+                  <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                </Avatar>
+              }
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10"
+                onClick={() => handleSignOut()}
+              >
+                <LogOut />
+              </Button>
+            </SidebarUserProfile>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
