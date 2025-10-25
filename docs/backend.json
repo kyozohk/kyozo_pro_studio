@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -170,11 +171,11 @@
       },
       "description": "Subcollection tracking members and their roles within a specific community."
     },
-    "/super-admins.json": {
-        "schema": {
-            "$ref": "#/entities/SuperAdmins"
-        },
-        "description": "A file used by Firestore rules to grant super admin privileges. This is not a collection."
+    "/super-admins/admins": {
+      "schema": {
+        "$ref": "#/entities/SuperAdmins"
+      },
+      "description": "A document used by Firestore rules to grant super admin privileges. This is not a collection."
     }
   }
 }
