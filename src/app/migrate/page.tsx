@@ -206,7 +206,7 @@ export default function MigratePage() {
             />
             <SidebarMenu className="p-2">
                 <SidebarMenuItem>
-                    <SidebarMenuButton href="#" icon={<LogOut />} onClick={() => handleSignOut()}>
+                    <SidebarMenuButton icon={<LogOut />} onClick={() => handleSignOut()}>
                         Sign Out
                     </SidebarMenuButton>
                 </SidebarMenuItem>

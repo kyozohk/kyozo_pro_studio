@@ -115,7 +115,7 @@ export default function CommunitiesPage() {
             />
             <SidebarMenu className="p-2">
                 <SidebarMenuItem>
-                    <SidebarMenuButton href="#" icon={<LogOut />} onClick={() => handleSignOut()}>
+                    <SidebarMenuButton icon={<LogOut />} onClick={() => handleSignOut()}>
                         Sign Out
                     </SidebarMenuButton>
                 </SidebarMenuItem>

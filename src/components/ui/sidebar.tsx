@@ -386,6 +386,7 @@ const SidebarMenuButton = React.forwardRef<
       icon,
       badge,
       href,
+      onClick,
       ...props
     },
     ref
@@ -417,7 +418,7 @@ const SidebarMenuButton = React.forwardRef<
       </>
     );
 
-    const button = href ? (
+    const button = (href && !onClick) ? (
       <Link
         ref={ref}
         href={href}
@@ -431,6 +432,7 @@ const SidebarMenuButton = React.forwardRef<
         ref={ref as React.ForwardedRef<HTMLButtonElement>}
         className={cn(sidebarMenuButtonVariants({ isActive }), 'bg-transparent hover:bg-transparent', className)}
         variant="ghost"
+        onClick={onClick}
         {...props}
       >
         {content}
