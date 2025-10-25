@@ -4,13 +4,12 @@ import { useEffect, useState, useTransition } from 'react';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore, type DocumentData } from 'firebase/firestore';
 import { oldFirebaseConfig } from '@/firebase/old-config';
-import { Loader2, UploadCloud } from 'lucide-react';
+import { Loader2, Download } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import CommunityList from './community-list';
 import MemberList from './member-list';
 import { Button } from '@/components/ui/button';
-import { exportCommunity } from '../actions';
 import { useToast } from '@/hooks/use-toast';
 import MemberDetails from './member-details';
 import {
@@ -25,7 +24,6 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
 import { Logo } from '@/components/landing/logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -36,7 +34,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { handleSignOut } from '@/firebase/auth/client';
 import { LogOut, Home, Users, Settings, Database } from 'lucide-react';
-import ExportPreviewDialog from './export-preview-dialog';
 
 let oldApp: FirebaseApp;
 if (!getApps().some(app => app.name === 'oldDB')) {
@@ -50,15 +47,10 @@ export default function MigratePage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
 
   const [selectedCommunity, setSelectedCommunity] = useState<DocumentData | null>(null);
   const [selectedMember, setSelectedMember] = useState<DocumentData | null>(null);
   const [communityMembers, setCommunityMembers] = useState<DocumentData[]>([]);
-
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [previewData, setPreviewData] = useState<object | null>(null);
-
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -74,33 +66,28 @@ export default function MigratePage() {
   const handleSelectMember = (memberData: DocumentData) => {
     setSelectedMember(memberData);
   };
+
+  const downloadJson = (data: any, filename: string) => {
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   
   const handleExport = () => {
     if (!selectedCommunity) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select a community to export.' });
         return;
     }
-    const dataToExport = {
-      community: selectedCommunity,
-      members: communityMembers
-    }
-    setPreviewData(dataToExport);
-    setIsPreviewOpen(true);
+    downloadJson(selectedCommunity, `${selectedCommunity.id}-community.json`);
+    downloadJson(communityMembers, `${selectedCommunity.id}-members.json`);
+    toast({ title: 'Export Started', description: 'Your JSON files are being downloaded.' });
   };
 
-  const confirmExport = () => {
-    if (!selectedCommunity) return;
-    setIsPreviewOpen(false);
-
-    startTransition(async () => {
-        const result = await exportCommunity(selectedCommunity, communityMembers);
-        if (result.success) {
-            toast({ title: 'Export Successful', description: result.message });
-        } else {
-            toast({ variant: 'destructive', title: 'Export Failed', description: result.message });
-        }
-    });
-  }
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return '';
@@ -193,19 +180,15 @@ export default function MigratePage() {
     <SidebarInset>
       <main className="flex-1 p-4 sm:p-6">
           <div className="max-w-6xl mx-auto text-center mb-6">
-              <h1 className="font-headline text-4xl font-bold">Database Migration Explorer</h1>
+              <h1 className="font-headline text-4xl font-bold">Database Migration Exporter</h1>
               <p className="mt-4 text-muted-foreground">
-                  Select a community to see its members, then select a member to see their messages from <code className="bg-muted px-2 py-1 rounded-md font-mono text-sm">kyozo-pro-webflow-fb6cc</code>.
+                  Select a community to see its members, then export the data to JSON files. You can then import these files using the 'Add Community' dialog on the dashboard.
               </p>
           </div>
           <div className="max-w-7xl mx-auto mb-6 text-center">
-               <Button onClick={handleExport} disabled={!selectedCommunity || isPending}>
-                  {isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                      <UploadCloud className="mr-2 h-4 w-4" />
-                  )}
-                  Export to New Schema
+               <Button onClick={handleExport} disabled={!selectedCommunity}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export to JSON
               </Button>
           </div>
           
@@ -234,13 +217,6 @@ export default function MigratePage() {
               </div>
           </div>
       </main>
-      <ExportPreviewDialog 
-        open={isPreviewOpen}
-        onOpenChange={setIsPreviewOpen}
-        data={previewData}
-        onConfirm={confirmExport}
-        isPending={isPending}
-      />
       </SidebarInset>
     </SidebarProvider>
   );
