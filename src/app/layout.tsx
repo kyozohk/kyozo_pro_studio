@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/firebase/auth-provider';
 import FixedFooter from '@/components/landing/footer';
+import FirebaseErrorListener from '@/components/firebase-error-listener';
 
 export const metadata: Metadata = {
   title: 'Kyozo',
@@ -31,6 +32,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
+          <FirebaseErrorListener />
           {children}
           <FixedFooter />
         </AuthProvider>

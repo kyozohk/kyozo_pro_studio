@@ -6,9 +6,9 @@ import { revalidatePath } from 'next/cache';
 import { getFirestore, doc, writeBatch, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
-// Helper to initialize Firebase Admin SDK
-// This should be done once per server instance.
 let app;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -18,24 +18,17 @@ if (!getApps().length) {
 
 const db = getFirestore(app);
 
-
-// This needs to be a client-side function, will move later
 export async function joinWaitlist(data: WaitlistInput) {
   const parsedData = waitlistSchema.safeParse(data);
 
   if (!parsedData.success) {
-    // Flatten errors for easier display
     const errorMessages = parsedData.error.flatten().fieldErrors;
     const firstError = Object.values(errorMessages)[0]?.[0] || 'Invalid data provided.';
     return { success: false, message: firstError };
   }
 
-  // Here you would typically save the data to a database (e.g., Firestore)
   console.log('New waitlist submission:', parsedData.data);
-
-  // Simulate a network delay
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
   revalidatePath('/');
 
   return { success: true, message: 'You have been added to the waitlist!' };
@@ -54,50 +47,51 @@ export async function checkContent(text: string): Promise<{ isToxic: boolean; re
     }
 }
 
-
 export async function exportCommunity(communityData: any, members: any[], tenantId: string) {
+    const batch = writeBatch(db);
+
+    const tenantRef = doc(db, 'tenants', tenantId);
+    batch.set(tenantRef, {
+        tenantId: tenantId,
+        name: `${tenantId}'s Organization`, 
+        email: 'owner@example.com',
+        subscription: { plan: 'free', status: 'active' }
+    }, { merge: true });
+
+    const communityRef = doc(db, 'tenants', tenantId, 'communities', communityData.communityId);
+    batch.set(communityRef, {
+        ...communityData,
+        createdAt: serverTimestamp()
+    });
+
+    members.forEach(member => {
+        const memberRef = doc(db, 'tenants', tenantId, 'communities', communityData.communityId, 'memberships', member.id);
+        batch.set(memberRef, {
+            memberId: member.id,
+            role: member.role || 'member',
+            status: 'active',
+            joinDate: member.joinDate ? new Date(member.joinDate) : serverTimestamp(),
+        });
+    });
+
+    const userRef = doc(db, 'users', tenantId);
+    batch.set(userRef, {
+        tenants: arrayUnion(tenantId)
+    }, { merge: true });
+
     try {
-        const batch = writeBatch(db);
-
-        // 1. Create the tenant document (if it doesn't exist)
-        const tenantRef = doc(db, 'tenants', tenantId);
-        batch.set(tenantRef, {
-            tenantId: tenantId,
-            name: `${tenantId}'s Organization`, // Placeholder name
-            email: 'owner@example.com', // Placeholder email
-            subscription: { plan: 'free', status: 'active' }
-        }, { merge: true });
-
-        // 2. Create the community document
-        const communityRef = doc(db, 'tenants', tenantId, 'communities', communityData.communityId);
-        batch.set(communityRef, {
-            ...communityData,
-            createdAt: serverTimestamp()
-        });
-
-        // 3. Create membership documents for each member
-        members.forEach(member => {
-            const memberRef = doc(db, 'tenants', tenantId, 'communities', communityData.communityId, 'memberships', member.id);
-            batch.set(memberRef, {
-                memberId: member.id,
-                role: member.role || 'member',
-                status: 'active',
-                joinDate: member.joinDate ? new Date(member.joinDate) : serverTimestamp(),
-            });
-        });
-
-        // 4. Update the user's tenants array
-        const userRef = doc(db, 'users', tenantId);
-        batch.update(userRef, {
-            tenants: arrayUnion(tenantId)
-        });
-
         await batch.commit();
-
         return { success: true, message: 'Community and members exported successfully!' };
+    } catch (serverError: any) {
+        const permissionError = new FirestorePermissionError({
+            path: `transactions (batch write)`,
+            operation: 'write',
+            requestResourceData: { communityData, members, tenantId },
+        }, serverError);
+        
+        // This will be caught by the global error handler
+        errorEmitter.emit('permission-error', permissionError);
 
-    } catch (error: any) {
-        console.error("Error exporting community:", error);
-        return { success: false, message: `Failed to export community. Reason: ${error.message}` };
+        return { success: false, message: serverError.message };
     }
 }

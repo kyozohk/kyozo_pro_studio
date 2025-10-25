@@ -11,26 +11,9 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
-import {
-  collection,
-  doc,
-  writeBatch,
-  serverTimestamp,
-  arrayUnion,
-  getFirestore,
-} from 'firebase/firestore';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
 import { useToast } from '@/hooks/use-toast';
 import SignInForm from '@/components/auth/sign-in-form';
-
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
-const db = getFirestore(app);
+import { exportCommunity } from '@/app/actions'; // Using the server action
 
 export default function TestPage() {
   const { user, loading: userLoading, signInWithGoogle, signOut } = useAuth();
@@ -50,11 +33,8 @@ export default function TestPage() {
 
     startTransition(async () => {
       setMessage('');
-      const tenantId = user.uid;
-      const newCommunityRef = doc(
-        collection(db, `tenants/${tenantId}/communities`)
-      );
-      const communityId = newCommunityRef.id;
+      
+      const communityId = `test-community-${Math.floor(Math.random() * 1000)}`;
 
       const communityData = {
         communityId: communityId,
@@ -62,60 +42,34 @@ export default function TestPage() {
         description: 'This is a test community created from the /test page.',
         visibility: 'public',
         profile: { logoUrl: '', bannerUrl: '' },
-        createdBy: tenantId,
+        createdBy: user.uid,
         memberCount: 1,
-        createdAt: serverTimestamp(),
       };
 
-      const tenantRef = doc(db, `tenants/${tenantId}`);
-      const membershipRef = doc(
-        db,
-        `tenants/${tenantId}/communities/${communityId}/memberships/${tenantId}`
-      );
-      const userRef = doc(db, `users/${user.uid}`);
-
-      try {
-        const batch = writeBatch(db);
-
-        // 1. Set Tenant Info
-        const tenantPayload = {
-          tenantId: tenantId,
-          name: `${user.displayName}'s Organization`,
-          email: user.email,
-          subscription: { plan: 'free', status: 'active' },
-        };
-        batch.set(tenantRef, tenantPayload, { merge: true });
-
-        // 2. Set Community Info
-        batch.set(newCommunityRef, communityData);
-
-        // 3. Set Membership for Owner
-        const membershipPayload = {
-          memberId: tenantId,
+      const members = [
+        {
+          id: user.uid,
           role: 'admin',
           status: 'active',
-          joinDate: serverTimestamp(),
-        };
-        batch.set(membershipRef, membershipPayload);
+          joinDate: new Date().toISOString(),
+        }
+      ];
 
-        // 4. Update user's tenants array
-        // Check if user doc exists, if not, create it.
-        batch.set(userRef, { tenants: arrayUnion(tenantId) }, { merge: true });
-
-        await batch.commit();
-
+      const result = await exportCommunity(communityData, members, user.uid);
+      
+      if (result.success) {
         setMessage(`Successfully created community with ID: ${communityId}`);
         toast({
           title: 'Success!',
           description: `Successfully created community with ID: ${communityId}`,
         });
-      } catch (error: any) {
-        console.error('Error creating community:', error);
-        setMessage(`Error creating community: ${error.message}`);
+      } else {
+        setMessage(`Error creating community: ${result.message}`);
+        // The detailed error will be shown by FirebaseErrorListener
         toast({
           variant: 'destructive',
           title: 'Error creating community',
-          description: error.message,
+          description: result.message || 'Missing or insufficient permissions.',
         });
       }
     });
@@ -146,7 +100,7 @@ export default function TestPage() {
                 <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
 
-              <div className="rounded-md bg-muted p-4 text-xs font-mono overflow-auto">
+              <div className="rounded-md bg-muted p-4 text-xs font-mono overflow-auto max-h-60">
                 <pre>{JSON.stringify(user, null, 2)}</pre>
               </div>
 
@@ -176,7 +130,7 @@ export default function TestPage() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => signInWithGoogle()}
+                onClick={() => signInWithGoogle(() => { router.push('/test'); })}
               >
                 Sign In with Google
               </Button>
