@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import styles from './FixedFooter.module.css';
 import AuthDialog from '../auth/auth-dialog';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { handleSignOut } from '@/firebase/auth/client';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ interface FixedFooterProps {
 }
 
 const FixedFooter: React.FC<FixedFooterProps> = ({ className = '' }) => {
-  const { user } = useUser();
+  const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isDialogOpen, setIsDialogOpen] = useState(false);

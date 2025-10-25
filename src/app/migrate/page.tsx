@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore, type DocumentData } from 'firebase/firestore';
 import { oldFirebaseConfig } from '@/firebase/old-config';
 import { Loader2, Download, Home, Users, Settings, Database, LayoutGrid, LogOut, ShieldCheck } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { useRouter } from 'next/navigation';
 import CommunityList from './community-list';
 import MemberList from './member-list';
@@ -42,7 +42,7 @@ if (!getApps().some(app => app.name === 'oldDB')) {
 const oldFirestore = getFirestore(oldApp);
 
 export default function MigratePage() {
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();

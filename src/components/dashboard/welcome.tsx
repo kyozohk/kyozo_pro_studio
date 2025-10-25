@@ -1,8 +1,8 @@
 'use client';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 
 export default function DashboardWelcome() {
-    const { user } = useUser();
+    const { user } = useAuth();
 
     return (
         <div className="mb-8">

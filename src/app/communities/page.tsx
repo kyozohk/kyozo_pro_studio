@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import {
@@ -34,7 +34,7 @@ import { handleSignOut } from '@/firebase/auth/client';
 import CommunityList from '@/components/dashboard/community-list';
 
 export default function CommunitiesPage() {
-  const { user, loading } = useUser();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

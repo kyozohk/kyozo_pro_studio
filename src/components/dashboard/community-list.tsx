@@ -8,15 +8,13 @@ import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import AddCommunityDialog from './add-community-dialog';
 import CommunityCard from './community-card';
-import { useAuth, useFirestore, useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import { doc, writeBatch, serverTimestamp, arrayUnion } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { doc, writeBatch, serverTimestamp, arrayUnion, collection } from 'firebase/firestore';
+import { db as firestore } from '@/firebase';
 
 
 async function createCommunity(
-  firestore: any,
   user: any,
   communityData: any
 ) {
@@ -26,7 +24,7 @@ async function createCommunity(
 
   const tenantId = user.uid;
   const tenantRef = doc(firestore, `tenants/${tenantId}`);
-  const communityCollectionRef = doc(
+  const communityRef = doc(
     firestore,
     `tenants/${tenantId}/communities`,
     communityData.communityId
@@ -47,7 +45,7 @@ async function createCommunity(
   };
   batch.set(tenantRef, tenantPayload, { merge: true });
 
-  batch.set(communityCollectionRef, communityData);
+  batch.set(communityRef, communityData);
 
   const membershipPayload = {
     memberId: tenantId,
@@ -61,48 +59,11 @@ async function createCommunity(
     tenants: arrayUnion(tenantId),
   });
 
-  return batch
-    .commit()
-    .catch(serverError => {
-      // Create and emit contextual errors for each failed operation in the batch
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: tenantRef.path,
-          operation: 'create',
-          requestResourceData: tenantPayload,
-        })
-      );
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: communityCollectionRef.path,
-          operation: 'create',
-          requestResourceData: communityData,
-        })
-      );
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: membershipRef.path,
-          operation: 'create',
-          requestResourceData: membershipPayload,
-        })
-      );
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: userRef.path,
-          operation: 'update',
-          requestResourceData: { tenants: [tenantId] },
-        })
-      );
-    });
+  return batch.commit()
 }
 
 export default function CommunityList() {
-  const { user, loading: userLoading } = useUser();
-  const firestore = useFirestore();
+  const { user, loading: userLoading } = useAuth();
   const { data, loading, addCommunity } = useDashboardData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -140,17 +101,21 @@ export default function CommunityList() {
         };
 
         try {
-          await createCommunity(firestore, user, communityData);
+          await createCommunity(user, communityData);
           toast({
             title: 'Test Community Created',
             description: 'Successfully created test community!',
           });
           // Optimistically update UI
           addCommunity({ id: communityId, ...communityData });
-        } catch (e) { {
-          // Error is caught and handled by the createCommunity function
+        } catch (e: any) {
+            console.error('Error creating test community:', e);
+            toast({
+                variant: 'destructive',
+                title: 'Error creating community',
+                description: e.message
+            });
         }
-      }
     });
   };
 

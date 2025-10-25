@@ -1,9 +1,19 @@
 
 'use client';
 
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { useAuth } from '@/firebase/auth-provider';
+import { collection, query, where, getDocs, doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useEffect, useState, useCallback } from 'react';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
+
+let app;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
+const firestore = getFirestore(app);
 
 // As per the schema, this represents the structure of a community document.
 interface Community {
@@ -22,8 +32,7 @@ interface UserDoc {
 }
 
 export function useDashboardData() {
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const { user } = useAuth();
   const [data, setData] = useState<{ communities: Community[] }>({ communities: [] });
   const [loading, setLoading] = useState(true);
 

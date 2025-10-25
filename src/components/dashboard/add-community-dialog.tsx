@@ -17,15 +17,14 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { CloudUpload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { useFirestore, useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import ImportCsvDialog from './import-csv-dialog';
-import { collection, doc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
+import { collection, doc, serverTimestamp, writeBatch, arrayUnion } from 'firebase/firestore';
+import { db as firestore } from '@/firebase';
+
 
 async function createCommunity(
-  firestore: any,
   user: any,
   communityData: any
 ) {
@@ -35,7 +34,7 @@ async function createCommunity(
 
   const tenantId = user.uid;
   const tenantRef = doc(firestore, `tenants/${tenantId}`);
-  const communityCollectionRef = doc(
+  const communityRef = doc(
     firestore,
     `tenants/${tenantId}/communities`,
     communityData.communityId
@@ -56,7 +55,7 @@ async function createCommunity(
   };
   batch.set(tenantRef, tenantPayload, { merge: true });
 
-  batch.set(communityCollectionRef, communityData);
+  batch.set(communityRef, communityData);
 
   const membershipPayload = {
     memberId: tenantId,
@@ -67,46 +66,10 @@ async function createCommunity(
   batch.set(membershipRef, membershipPayload);
 
   batch.update(userRef, {
-    tenants: [tenantId],
+    tenants: arrayUnion(tenantId),
   });
 
-  return batch.commit().catch(serverError => {
-    // Create and emit contextual errors for each failed operation in the batch
-    errorEmitter.emit(
-      'permission-error',
-      new FirestorePermissionError({
-        path: tenantRef.path,
-        operation: 'create',
-        requestResourceData: tenantPayload,
-      })
-    );
-    errorEmitter.emit(
-      'permission-error',
-      new FirestorePermissionError({
-        path: communityCollectionRef.path,
-        operation: 'create',
-        requestResourceData: communityData,
-      })
-    );
-    errorEmitter.emit(
-      'permission-error',
-      new FirestorePermissionError({
-        path: membershipRef.path,
-        operation: 'create',
-        requestResourceData: membershipPayload,
-      })
-    );
-    errorEmitter.emit(
-      'permission-error',
-      new FirestorePermissionError({
-        path: userRef.path,
-        operation: 'update',
-        requestResourceData: { tenants: [tenantId] },
-      })
-    );
-    // Re-throw to be caught by the calling function's try/catch
-    throw serverError;
-  });
+  return batch.commit();
 }
 
 
@@ -125,8 +88,7 @@ const iconOptions = [
 ];
 
 export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCommunityDialogProps) {
-    const { user } = useUser();
-    const firestore = useFirestore();
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     
@@ -186,14 +148,13 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
         
         startTransition(async () => {
             try {
-                await createCommunity(firestore, user, communityData);
+                await createCommunity(user, communityData);
                 toast({ title: 'Community Created', description: `Successfully created ${communityName}` });
                 onSuccess({ id: communityId, ...communityData });
                 onClose();
-            } catch (error) {
-                // The error is emitted by the createCommunity function, so we just need to avoid crashing.
-                // The FirebaseErrorListener will show the error to the user.
-                console.log("Create community failed, error was handled by emitter.")
+            } catch (error: any) {
+                console.error('Error creating community:', error);
+                toast({ variant: 'destructive', title: 'Error creating community', description: error.message });
             }
         });
     };

@@ -374,7 +374,6 @@ const SidebarMenuButton = React.forwardRef<
       tooltip?: string | React.ComponentProps<typeof TooltipContent>;
       icon?: React.ReactNode;
       badge?: React.ReactNode;
-      href?: string;
     }
 >(
   (

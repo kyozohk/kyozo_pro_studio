@@ -1,7 +1,7 @@
 'use client';
 
 import ModerationTool from '@/components/moderation-tool';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import {
@@ -34,7 +34,7 @@ import { handleSignOut } from '@/firebase/auth/client';
 
 
 export default function ModerationPage() {
-  const { user, loading } = useUser();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

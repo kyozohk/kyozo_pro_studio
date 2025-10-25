@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import {
@@ -35,7 +35,7 @@ import DashboardWelcome from '@/components/dashboard/welcome';
 import CommunityList from '@/components/dashboard/community-list';
 
 export default function DashboardPage() {
-  const { user, loading } = useUser();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Logo } from '@/components/landing/logo';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase/auth-provider';
 import { handleSignOut } from '@/firebase/auth/client';
 import {
   DropdownMenu,
@@ -17,7 +17,7 @@ import Link from 'next/link';
 import AuthDialog from '../auth/auth-dialog';
 
 export default function Header() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
   const getInitials = (name: string | null | undefined) => {
