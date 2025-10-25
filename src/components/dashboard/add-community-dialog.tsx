@@ -98,14 +98,21 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
       });
     }
 
-    const handleSubmit = async (formData: FormData) => {
-        if (!name) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Community name is required.' });
-            return;
-        }
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        
         if (!user) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to create a community.' });
             return;
+        }
+
+        const formData = new FormData(event.currentTarget);
+
+        // If name is empty, create a default community
+        if (!formData.get('name')) {
+            const defaultName = `My Awesome Community #${Math.floor(Math.random() * 1000)}`;
+            formData.set('name', defaultName);
+            formData.set('description', `This is a default community called ${defaultName}. We are awesome.`);
         }
 
         formData.append('userId', user.uid);
@@ -146,12 +153,12 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
         <>
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl p-0" onDragOver={(e) => e.preventDefault()}>
-                <form action={handleSubmit} ref={formRef}>
+                <form onSubmit={handleSubmit} ref={formRef}>
                     <div className="grid grid-cols-1 md:grid-cols-2">
                         <div className="p-8 flex flex-col gap-6">
                             <div>
                                 <DialogTitle className="text-2xl font-bold font-headline">Your Community Details</DialogTitle>
-                                <DialogDescription>Create a new community and start building.</DialogDescription>
+                                <DialogDescription>Create a new community and start building. Leave name blank to create a default one.</DialogDescription>
                             </div>
                             
                             <div 
