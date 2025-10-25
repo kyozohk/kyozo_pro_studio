@@ -15,18 +15,14 @@ import type { SignUpInput, SignInInput } from '@/lib/types';
 import { useUser } from './use-user';
 
 
-const getGoogleProvider = () => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-        prompt: 'select_account',
-    });
-    return provider;
-}
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({
+    prompt: 'select_account',
+});
 
 
 export function handleGoogleSignIn(callback?: () => void) {
   const auth = getAuth();
-  const provider = getGoogleProvider();
   signInWithPopup(auth, provider)
     .then(result => {
       // This gives you a Google Access Token. You can use it to access the Google API.
