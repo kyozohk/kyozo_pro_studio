@@ -188,7 +188,7 @@ const Sidebar = React.forwardRef<
             'fixed h-full border-r bg-sidebar text-sidebar-foreground',
             side === 'right' && 'right-0 border-l',
             state === 'expanded' ? 'w-[16rem]' : 'w-[3.5rem]',
-            'transition-all'
+            'transition-all flex flex-col'
           )}
         >
           {children}
@@ -355,9 +355,9 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       isActive: {
-        true: 'text-sidebar-primary bg-sidebar-accent/10',
+        true: 'text-sidebar-primary',
         false:
-          'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
+          'text-sidebar-foreground/80 hover:text-sidebar-primary',
       },
     },
     defaultVariants: {
@@ -398,15 +398,13 @@ const SidebarMenuButton = React.forwardRef<
           React.cloneElement(icon as React.ReactElement, {
             className: cn(
               'h-5 w-5 shrink-0',
-              isActive
-                ? 'text-sidebar-primary'
-                : 'text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-primary'
+               isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/70 group-hover/menu-button:text-sidebar-primary'
             ),
           })}
         <span
           className={cn(
             'group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:w-0',
-            isActive && 'text-sidebar-primary'
+             isActive ? 'text-sidebar-primary' : ''
           )}
         >
           {children}
@@ -423,7 +421,7 @@ const SidebarMenuButton = React.forwardRef<
       <Link
         ref={ref}
         href={href}
-        className={cn(sidebarMenuButtonVariants({ isActive }), className)}
+        className={cn(sidebarMenuButtonVariants({ isActive }), 'bg-transparent hover:bg-transparent', className)}
         {...props}
       >
         {content}
@@ -431,7 +429,8 @@ const SidebarMenuButton = React.forwardRef<
     ) : (
       <Button
         ref={ref as React.ForwardedRef<HTMLButtonElement>}
-        className={cn(sidebarMenuButtonVariants({ isActive }), className)}
+        className={cn(sidebarMenuButtonVariants({ isActive }), 'bg-transparent hover:bg-transparent', className)}
+        variant="ghost"
         {...props}
       >
         {content}
