@@ -9,10 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { CloudUpload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Image from 'next/image';
-import { useFirestore, useUser } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import ImportCsvDialog from './import-csv-dialog';
-import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { createCommunity } from '@/app/actions';
 
 
 interface AddCommunityDialogProps {
@@ -31,7 +31,6 @@ const iconOptions = [
 
 export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCommunityDialogProps) {
     const { user } = useUser();
-    const firestore = useFirestore();
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     
@@ -60,7 +59,7 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         
-        if (!user || !firestore) {
+        if (!user) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to create a community.' });
             return;
         }
@@ -68,58 +67,29 @@ export default function AddCommunityDialog({ isOpen, onClose, onSuccess }: AddCo
         const formData = new FormData(event.currentTarget);
         let communityName = formData.get('name') as string;
         let communityDesc = formData.get('description') as string;
+        let visibility = (formData.get('isPublic') === 'true') ? 'public' : 'private';
 
         if (!communityName) {
             communityName = `My Awesome Community #${Math.floor(Math.random() * 1000)}`;
             communityDesc = `This is a default community called ${communityName}. We are awesome.`;
         }
+
+        const communityData = {
+          name: communityName,
+          description: communityDesc,
+          visibility: visibility,
+          profile: { logoUrl: '', bannerUrl: '' },
+        };
         
         startTransition(async () => {
-            try {
-                const batch = writeBatch(firestore);
-                const tenantId = user.uid;
-
-                const tenantRef = doc(firestore, 'tenants', tenantId);
-                batch.set(tenantRef, {
-                    tenantId: tenantId,
-                    name: `${user.displayName}'s Organization`,
-                    email: user.email,
-                    subscription: { plan: 'free', status: 'active' }
-                }, { merge: true });
-
-                const communityRef = doc(collection(firestore, 'tenants', tenantId, 'communities'));
-                const newCommunityData = {
-                    communityId: communityRef.id,
-                    name: communityName,
-                    description: communityDesc,
-                    visibility: (formData.get('isPublic') === 'true') ? 'public' : 'private',
-                    createdBy: tenantId,
-                    memberCount: 1,
-                    profile: { logoUrl: '', bannerUrl: '' },
-                    createdAt: serverTimestamp()
-                };
-                batch.set(communityRef, newCommunityData);
-
-                const membershipRef = doc(collection(communityRef, 'memberships'), user.uid);
-                batch.set(membershipRef, {
-                    memberId: user.uid,
-                    role: 'admin',
-                    status: 'active',
-                    joinDate: serverTimestamp()
-                });
-
-                const userRef = doc(firestore, 'users', user.uid);
-                batch.update(userRef, { tenants: [tenantId] });
-
-                await batch.commit();
-
+            const result = await createCommunity(communityData, user.uid, user.email!, user.displayName!);
+            
+            if (result.success) {
                 toast({ title: 'Community Created', description: `Successfully created ${communityName}` });
-                onSuccess({ id: communityRef.id, ...newCommunityData });
+                onSuccess(result.data);
                 onClose();
-
-            } catch (error: any) {
-                console.error("Error creating community:", error);
-                toast({ variant: 'destructive', title: 'Error', description: `Failed to create community: ${error.message}` });
+            } else {
+                toast({ variant: 'destructive', title: 'Error', description: result.message });
             }
         });
     };

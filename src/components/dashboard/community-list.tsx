@@ -8,20 +8,19 @@ import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import AddCommunityDialog from './add-community-dialog';
 import CommunityCard from './community-card';
-import { useFirestore, useUser } from '@/firebase';
+import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { createCommunity } from '@/app/actions';
 
 export default function CommunityList() {
   const { user, loading: userLoading } = useUser();
-  const firestore = useFirestore();
   const { data, loading, addCommunity } = useDashboardData();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const handleTestCreate = async () => {
-    if (!user || !firestore) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -31,72 +30,30 @@ export default function CommunityList() {
     }
 
     startTransition(async () => {
-      try {
-        const batch = writeBatch(firestore);
-        const tenantId = user.uid;
-
-        const tenantRef = doc(firestore, 'tenants', tenantId);
-        batch.set(
-          tenantRef,
-          {
-            tenantId: tenantId,
-            name: `${user.displayName}'s Organization`,
-            email: user.email,
-            subscription: { plan: 'free', status: 'active' },
-          },
-          { merge: true }
-        );
-
-        const communityRef = doc(
-          collection(firestore, 'tenants', tenantId, 'communities')
-        );
-        const newCommunityData = {
-          communityId: communityRef.id,
+        const communityData = {
           name: `Test Community ${Math.floor(Math.random() * 1000)}`,
           description:
             'This is a test community created with a simple button click.',
           visibility: 'public',
-          createdBy: tenantId,
-          memberCount: 1,
           profile: {
             logoUrl: '',
             bannerUrl: '',
           },
-          createdAt: serverTimestamp(),
         };
-        batch.set(communityRef, newCommunityData);
-
-        const membershipRef = doc(
-          collection(communityRef, 'memberships'),
-          user.uid
-        );
-        batch.set(membershipRef, {
-          memberId: user.uid,
-          role: 'admin',
-          status: 'active',
-          joinDate: serverTimestamp(),
-        });
-
-        const userRef = doc(firestore, 'users', user.uid);
-        batch.update(userRef, {
-          tenants: [tenantId],
-        });
-
-        await batch.commit();
-
-        toast({
-          title: 'Test Community Created',
-          description: 'Successfully created test community!',
-        });
-        addCommunity({ id: communityRef.id, ...newCommunityData });
-      } catch (error: any) {
-        console.error('Error creating community:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error creating community',
-          description: error.message,
-        });
-      }
+        const result = await createCommunity(communityData, user.uid, user.email!, user.displayName!);
+        if (result.success) {
+            toast({
+              title: 'Test Community Created',
+              description: 'Successfully created test community!',
+            });
+            addCommunity(result.data);
+        } else {
+            toast({
+              variant: 'destructive',
+              title: 'Error creating community',
+              description: result.message,
+            });
+        }
     });
   };
 
