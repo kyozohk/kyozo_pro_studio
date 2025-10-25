@@ -425,11 +425,11 @@ const SidebarMenuButton = React.forwardRef<
         >
           {children}
         </span>
-        {badge && (
+        {/* {badge && (
           <div className="ml-auto group-[[data-state=collapsed]]/sidebar-wrapper:sr-only group-[[data-state=collapsed]]/sidebar-wrapper:hidden">
             {badge}
           </div>
-        )}
+        )} */}
       </>
     );
 
